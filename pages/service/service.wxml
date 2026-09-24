@@ -1,0 +1,18 @@
+<view class="page svc-page">
+
+  <view class="card svc">
+    <view class="svc-title">遇到任何问题或建议</view>
+
+    <view class="svc-desc">欢迎联系客服反馈，我们会尽快跟进处理。</view>
+    <view class="svc-desc">点击下方的按钮即可进入客服会话；也可以发送邮件到</view>
+
+    <!-- 邮箱单独一行（固定换行，不会在地址中间断开）：点一下或长按都能复制 -->
+    <view class="mail" bindtap="onCopyMail" bindlongpress="onCopyMail" hover-class="mail-active">
+      <text class="mail-text">{{mail}}</text>
+      <text class="mail-copy">复制</text>
+    </view>
+
+    <button class="btn svc-btn" open-type="contact" hover-class="pressed">进入客服会话</button>
+  </view>
+
+</view>

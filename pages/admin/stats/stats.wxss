@@ -1,0 +1,106 @@
+/* 数据统计：卡片式统计页（仅管理员）
+ * 排版沿用「关于应用」那套：白卡 + 标题左侧紫竖线；卡片底用 --fill / --brand-light */
+
+.sec {
+  margin-top: 24rpx;
+  padding: 32rpx;
+}
+
+.sec:first-child {
+  margin-top: 0;
+}
+
+/* 分块标题：左边一条品牌色短竖线（跟「关于应用」一致，长页面里当锚点） */
+.sec-title {
+  position: relative;
+  padding-left: 20rpx;
+  font-size: var(--fs-strong);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.sec-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6rpx;
+  height: 32rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand);
+}
+
+/* 一行卡片：数量固定是 4 张（后端每个分组都给 4 张），flex 平分，宽度不飘 */
+.stat-row {
+  display: flex;
+  margin-top: 24rpx;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 0;              /* 不加这条，长数字会把格子撑开、四张就不等宽了 */
+  position: relative;
+  padding: 20rpx 8rpx;
+  border-radius: 20rpx;
+  background: var(--fill);
+  text-align: center;
+}
+
+.stat-card + .stat-card {
+  margin-left: 12rpx;
+}
+
+/* 能点的卡（下钻到用户名单）：浅紫底 + 数字用主题色，静态就能看出来能点 */
+.stat-tap {
+  background: var(--brand-light);
+}
+
+.stat-tap .stat-num {
+  color: var(--brand);
+}
+
+.stat-tap-active {
+  opacity: 0.7;
+}
+
+.stat-num {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.stat-label {
+  display: block;
+  margin-top: 2rpx;
+  font-size: 22rpx;
+  color: var(--text-sub);
+}
+
+.stat-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: var(--text-weak);
+  line-height: 1.4;
+}
+
+/* 口径说明 */
+.rule {
+  margin-top: 12rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  line-height: 1.7;
+}
+
+.tip {
+  padding: 40rpx;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+.tip-err {
+  color: var(--danger);
+}

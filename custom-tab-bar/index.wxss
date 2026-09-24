@@ -1,0 +1,67 @@
+/* 底部导航（自研 tabBar）—— 图标为内联 SVG base64（脚本生成，改图标改这里再重跑生成）
+ * 样式对齐样式基线（question 实战值）：高 124rpx、冷调上投影、文字 24rpx
+ * 页面在 onShow 里调用 this.getTabBar().setSelected(n) 高亮当前项。
+ *
+ * 两个坑（2026-09 实测，别再踩）：
+ * 1) 本文件是自定义组件，**拿不到 page 上定义的 CSS 变量**：--brand / --fs-tiny /
+ *    --shadow-up 在这里都解析不到，会退回默认值（文字 16px 实黑、没有投影）。
+ *    所以这里数值一律写死，不写 var()。
+ * 2) 高度必须是「124rpx + 安全区」。写 height:124rpx + padding-bottom:env(safe-area-inset-bottom)
+ *    时 border-box 会把安全区算进高度，内容区只剩 ~60px → 图标被 flex 压成一条缝
+ *    （实测图标墨迹只剩 16px 高，看着就是三个碎图）。图标上再加 flex-shrink:0 兜一层。
+ */
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(124rpx + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  background: #ffffff;
+  box-shadow: 0 -6rpx 24rpx rgba(74, 58, 92, 0.05);
+  z-index: 100;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-icon {
+  width: 52rpx;
+  height: 52rpx;
+  /* 挤不下时不许压缩：压了就只剩中间一条，图标会变成碎图 */
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 52rpx 52rpx;
+}
+
+.tab-text {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  flex-shrink: 0;
+  line-height: 1;
+  color: #8F8799;
+}
+
+.tab-item.on .tab-text {
+  color: #5D4C7C;
+}
+
+/* ---- 图标（线性描边；选中态换品牌色，同一套形状） ---- */
+
+.icon-wardrobe { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOEY4Nzk5IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSI0LjIiIHk9IjMiIHdpZHRoPSIxNS42IiBoZWlnaHQ9IjE4IiByeD0iMi40Ii8+PHBhdGggZD0iTTEyIDN2MTgiLz48cGF0aCBkPSJNOS45IDExLjh2MS44Ii8+PHBhdGggZD0iTTE0LjEgMTEuOHYxLjgiLz48L3N2Zz4="); }
+.tab-item.on .icon-wardrobe { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNUQ0QzdDIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSI0LjIiIHk9IjMiIHdpZHRoPSIxNS42IiBoZWlnaHQ9IjE4IiByeD0iMi40Ii8+PHBhdGggZD0iTTEyIDN2MTgiLz48cGF0aCBkPSJNOS45IDExLjh2MS44Ii8+PHBhdGggZD0iTTE0LjEgMTEuOHYxLjgiLz48L3N2Zz4="); }
+.icon-outfit { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOEY4Nzk5IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTIgNi40VjQuOWEyLjEgMi4xIDAgMCAwLTIuMS0yLjEiLz48cGF0aCBkPSJNMTIgNi40IDMuMiAxNC45YS45LjkgMCAwIDAgLjYgMS42aDE2LjRhLjkuOSAwIDAgMCAuNi0xLjZMMTIgNi40WiIvPjwvc3ZnPg=="); }
+.tab-item.on .icon-outfit { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNUQ0QzdDIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTIgNi40VjQuOWEyLjEgMi4xIDAgMCAwLTIuMS0yLjEiLz48cGF0aCBkPSJNMTIgNi40IDMuMiAxNC45YS45LjkgMCAwIDAgLjYgMS42aDE2LjRhLjkuOSAwIDAgMCAuNi0xLjZMMTIgNi40WiIvPjwvc3ZnPg=="); }
+.icon-user { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOEY4Nzk5IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjgiIHI9IjQiLz48cGF0aCBkPSJNNC42IDIwYzAtNC4yIDMuMy02LjYgNy40LTYuNnM3LjQgMi40IDcuNCA2LjYiLz48L3N2Zz4="); }
+.tab-item.on .icon-user { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNUQ0QzdDIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjgiIHI9IjQiLz48cGF0aCBkPSJNNC42IDIwYzAtNC4yIDMuMy02LjYgNy40LTYuNnM3LjQgMi40IDcuNCA2LjYiLz48L3N2Zz4="); }
+
+/* 日历（2026-09 新增 tab） */
+.icon-cal { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOEY4Nzk5IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzLjYiIHk9IjUuMiIgd2lkdGg9IjE2LjgiIGhlaWdodD0iMTUuMiIgcng9IjIuNCIvPjxwYXRoIGQ9Ik04IDMuMnY0TTE2IDMuMnY0TTMuNiAxMGgxNi44Ii8+PHBhdGggZD0iTTcuNiAxMy40aDJNMTIgMTMuNGgyTTE2LjQgMTMuNGguMDFNNy42IDE3aDJNMTIgMTdoMiIvPjwvc3ZnPg=="); }
+.tab-item.on .icon-cal { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNUQ0QzdDIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzLjYiIHk9IjUuMiIgd2lkdGg9IjE2LjgiIGhlaWdodD0iMTUuMiIgcng9IjIuNCIvPjxwYXRoIGQ9Ik04IDMuMnY0TTE2IDMuMnY0TTMuNiAxMGgxNi44Ii8+PHBhdGggZD0iTTcuNiAxMy40aDJNMTIgMTMuNGgyTTE2LjQgMTMuNGguMDFNNy42IDE3aDJNMTIgMTdoMiIvPjwvc3ZnPg=="); }

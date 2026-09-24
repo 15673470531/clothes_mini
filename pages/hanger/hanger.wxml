@@ -1,0 +1,90 @@
+<!-- 衣架说明：概念 / 怎么来 / 怎么算 / 不够了怎么办（从「我的」页菜单点进来） -->
+<view class="page page-with-bar">
+
+  <!-- 当前剩余：只有拿到数字才显示（查失败时别显示成 0/200 误导人），说明部分照常看 -->
+  <view wx:if="{{ready}}" class="card hero">
+    <view class="hero-icon"><view class="ico ico-hanger"></view></view>
+    <view class="hero-nums">
+      <text class="hn-val hn-{{totalState}}">{{heroText}}</text>
+      <text class="hn-label">还剩 / 总共</text>
+    </view>
+    <view wx:if="{{fullText}}" class="hero-full">{{fullText}}</view>
+  </view>
+
+  <!-- 什么是衣架 -->
+  <view class="card sec">
+    <view class="sec-title">什么是衣架</view>
+    <view class="feat">
+      <text class="feat-name">一个衣架挂一样东西</text>
+      <text class="feat-desc">录一件衣物占一个衣架，存一套搭配也占一个衣架 —— 衣物和搭配共用一个架子。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">为什么会有上限</text>
+      <text class="feat-desc">衣物照片存在云端（服务器）上是有成本的，所以免费能挂的数量是有限的。</text>
+    </view>
+  </view>
+
+  <!-- 怎么来的 -->
+  <view class="card sec">
+    <view class="sec-title">衣架从哪来</view>
+    <view class="feat">
+      <text class="feat-name">{{freeName}}</text>
+      <text class="feat-desc">这是总共能挂的数量，一直在，不会过期。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">每天另有当日上限</text>
+      <text class="feat-desc">同一天里挂太多会暂时挂不上（每天的额度用完了，第二天自动恢复）；用不完也不会攒到明天。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">每天可以赚</text>
+      <text class="feat-desc">在「我的」页衣架卡右侧点「获取更多」：每日签到、分享群或者好友、每月免费领取都能拿衣架（具体几个以那一页显示为准）。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">不够可以加</text>
+      <text class="feat-desc">联系客服可以把总数加多（加多少就能多挂多少）。</text>
+    </view>
+  </view>
+
+  <!-- 怎么算 -->
+  <view class="card sec">
+    <view class="sec-title">衣架怎么算</view>
+    <view class="feat">
+      <text class="feat-name">新增就占</text>
+      <text class="feat-desc">录一件新衣物扣 1 个；存一套新搭配也扣 1 个。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">改已有的不占</text>
+      <text class="feat-desc">改名字、改场合、换搭配里的衣物、重新出封面、给衣物换照片，都不扣衣架 —— 换图是"换一张"，旧图会一起删掉，云端挂着的东西没变多。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">删掉会还回来</text>
+      <text class="feat-desc">删掉一件衣物或一套搭配，衣架就回到总数里；删掉不想要的，就能挂新的。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">今日的不回补</text>
+      <text class="feat-desc">今天挂过就占掉今天的名额（不然删了再加就没完没了），明天自动恢复。</text>
+    </view>
+  </view>
+
+  <!-- 不够了怎么办 -->
+  <view class="card sec">
+    <view class="sec-title">衣架不够了怎么办</view>
+    <view class="feat">
+      <text class="feat-name">今天的用完了</text>
+      <text class="feat-desc">明天再来就好，会自动恢复。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">总数的用完了</text>
+      <text class="feat-desc">删掉不想要的衣物或搭配腾出衣架，也可以联系客服。</text>
+    </view>
+  </view>
+
+  <view class="gap"></view>
+</view>
+
+<!-- 底部：随时能找到客服（加衣架走这里） -->
+<view class="bar">
+  <view class="bar-btns">
+    <view class="btn btn-primary" hover-class="pressed" bindtap="onService">联系客服</view>
+  </view>
+</view>

@@ -1,0 +1,117 @@
+<view class="page page-with-tab">
+
+  <!-- 未登录：通栏渐变头（照 money：居中头像 + 标题 + 说明 + 白底登录按钮） -->
+  <view wx:if="{{!loggedIn}}" class="me-head me-head-center">
+    <view class="me-avatar me-avatar-empty">
+      <text class="me-avatar-emoji">👗</text>
+    </view>
+    <view class="me-title">海豚衣橱</view>
+    <view class="me-desc">登录后可以设置头像和昵称</view>
+    <button
+      class="me-login-btn"
+      hover-class="pressed"
+      open-type="chooseAvatar"
+      bindchooseavatar="onChooseAvatar">微信授权登录</button>
+  </view>
+
+  <!-- 已登录：一行 = 头像 +（昵称 / ID），头像点了能换（照 money 的一行布局） -->
+  <view wx:else class="me-head me-head-row">
+    <!-- 外面套一层定尺寸容器：button 绝对铺满，宽度由定位决定
+         （微信 button 有默认宽度 184px，直接给 button 写 width 有时压不住） -->
+    <view class="me-avatar-wrap">
+      <!-- 尺寸用内联 style 兜底：微信 button 的默认宽度（184px）普通 class 压不住 -->
+      <button
+        class="me-avatar-btn"
+        style="width:120rpx;height:120rpx;padding:0;margin:0;border:0;background:transparent;"
+        open-type="chooseAvatar"
+        bindchooseavatar="onChooseAvatar">
+        <image wx:if="{{userInfo.avatarUrl}}" class="me-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <view wx:else class="me-avatar me-avatar-empty">
+          <text class="me-avatar-emoji">👗</text>
+        </view>
+      </button>
+    </view>
+
+    <view class="me-info">
+      <block wx:if="{{editingName}}">
+        <view class="me-edit-row">
+          <input
+            class="me-name-input"
+            type="nickname"
+            placeholder="填个昵称"
+            placeholder-class="me-input-ph"
+            value="{{nameDraft}}"
+            confirm-type="done"
+            bindinput="onNameInput"
+            bindconfirm="onSaveName"
+            bindblur="onNameBlur" />
+          <view class="me-save" bindtap="onSaveName">保存</view>
+        </view>
+      </block>
+      <block wx:else>
+        <view class="me-name-row">
+          <text class="me-name">{{displayName}}</text>
+          <text class="me-name-edit" bindtap="onEditName">修改</text>
+        </view>
+      </block>
+      <text class="me-id">ID: {{displayId}}</text>
+      <text class="me-hint">点头像可更换</text>
+    </view>
+
+    <!-- 衣架卡（2026-09 第三版 · 用户定的）：整行一张浅透明白卡
+         左边「衣架 97 / 162」= 可用 / 总数（数字全部后端下发；总数 = 余额 + 已占用）
+         点卡片主体或右边「获取更多 ›」都进赚衣架页（衣架说明页 2026-09 隐藏，只留着文件）
+         右侧按钮用 catchtap：别让点击冒泡到卡片主体，不然会跳两个页面 -->
+    <view wx:if="{{hangerReady}}" class="hc hc-{{hangerTotalState}}">
+      <view class="hc-main" hover-class="hc-main-active" bindtap="onHanger">
+        <view class="hc-ico"></view>
+        <text class="hc-num">{{hangerCardText}}</text>
+      </view>
+      <view class="hc-more" hover-class="hc-more-active" catchtap="onReward">
+        <text class="hc-more-t">获取更多</text>
+        <text class="hc-more-arw">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 菜单：圆形图标 + 标题/说明 + 箭头（照 money 的菜单样式） -->
+  <view class="list me-menu">
+
+    <!-- 数据统计：仅管理员（userInfo.isAdmin 由后端登录/资料接口下发） -->
+    <view wx:if="{{userInfo.isAdmin}}" class="me-item" hover-class="me-item-active" bindtap="onStats">
+      <view class="me-icon"><view class="me-ico ico-stats"></view></view>
+      <view class="me-item-info">
+        <text class="me-item-title">数据统计</text>
+        <text class="me-item-desc">新增用户 · 活跃与使用情况</text>
+      </view>
+      <view class="chevron"></view>
+    </view>
+
+    <view class="me-item" hover-class="me-item-active" bindtap="onService">
+      <view class="me-icon"><view class="me-ico ico-service"></view></view>
+      <view class="me-item-info">
+        <text class="me-item-title">联系客服</text>
+        <text class="me-item-desc">遇到问题或建议，联系客服</text>
+      </view>
+      <view class="chevron"></view>
+    </view>
+
+    <view class="me-item" hover-class="me-item-active" bindtap="onAbout">
+      <view class="me-icon"><view class="me-ico ico-about"></view></view>
+      <view class="me-item-info">
+        <text class="me-item-title">关于应用</text>
+        <text class="me-item-desc">功能介绍 · 版本 v{{version}}</text>
+      </view>
+      <view class="chevron"></view>
+    </view>
+  </view>
+
+  <!-- 退出登录（照 money：白底红字） -->
+  <view wx:if="{{loggedIn}}" class="me-logout" hover-class="me-logout-active" bindtap="onLogout">退出登录</view>
+
+  <view class="card note">
+    <!-- 2026-09 数据上云后改口径：衣物/搭配/日历/照片都在服务器上 -->
+    <view class="note-title">数据都存在云端</view>
+    <view class="note-desc">登录之后衣橱、搭配、日历和照片都存在服务器上，换手机登录同一个账号就能看到。</view>
+  </view>
+</view>

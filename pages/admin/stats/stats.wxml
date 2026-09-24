@@ -1,0 +1,38 @@
+<view class="page">
+
+  <!-- 加载中 / 出错 -->
+  <view class="card tip" wx:if="{{loading && groups.length == 0}}">加载中…</view>
+  <view class="card tip tip-err" wx:if="{{error}}">{{error}}</view>
+
+  <!-- 统计分组：由后端 groups 数组驱动（新增用户 / 活跃用户 / 内容量 / 真实使用率） -->
+  <view class="card sec" wx:for="{{groups}}" wx:key="id" wx:for-item="group" wx:for-index="gi">
+    <view class="sec-title">{{group.icon}} {{group.title}}</view>
+
+    <!-- 一行放完（最多 4 张卡）；可点的卡有主题色呼应，不可点的是灰底 -->
+    <view class="stat-row">
+      <view class="stat-card {{group.type ? 'stat-tap' : ''}}"
+        wx:for="{{group.cards}}" wx:key="label" wx:for-item="card"
+        hover-class="{{group.type && card.date_from ? 'stat-tap-active' : ''}}"
+        bindtap="onCard"
+        data-type="{{group.type}}"
+        data-filter="{{group.filter}}"
+        data-from="{{card.date_from}}"
+        data-title="{{group.title}}"
+        data-label="{{card.label}}">
+        <text class="stat-num">{{card.value}}</text>
+        <text class="stat-label">{{card.label}}</text>
+        <text class="stat-sub" wx:if="{{card.sub}}">{{card.sub}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 口径说明：数字跟后台对不上时看这里 -->
+  <view class="card sec" wx:if="{{groups.length > 0}}">
+    <view class="sec-title">口径说明</view>
+    <view class="rule">新增用户按注册时间算；活跃用户按最近一次使用算（每次打开小程序都会刷新）。</view>
+    <view class="rule">内容量和真实使用率都不含管理员自己，管理员录的自测数据不算进去；已删除的衣物、搭配也不计。</view>
+    <view class="rule">「人均件数」按真的录过衣物的人数算，而不是按注册数——不然被空号拉低，看不出真实使用强度。</view>
+    <view class="rule">只有「新增用户」「活跃用户」的卡片能点，点进去是对应的用户名单。</view>
+  </view>
+
+</view>

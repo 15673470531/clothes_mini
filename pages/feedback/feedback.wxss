@@ -1,0 +1,19 @@
+/* 意见反馈页：只留本页布局 */
+
+.fb-card {
+  padding: 32rpx;
+}
+
+.fb-input {
+  width: 100%;
+  min-height: 320rpx;
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+
+.fb-count {
+  margin-top: 16rpx;
+  text-align: right;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}

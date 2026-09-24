@@ -1,0 +1,56 @@
+/* 新建搭配页：只留本页布局（图片墙 / 胶囊 / 筛选行走 app.wxss）
+ * 名称和场合已从这里移除（2026-09 用户要求）：预览页里能改，这里只剩「挑衣物」 */
+
+/* 品类筛选行：紧跟在「从衣橱里选衣物」标题下面 */
+.cats {
+  margin-bottom: 16rpx;
+}
+
+/* 「已选 N」：在标题行右侧，点了切换「只看已选」
+ * （原来是放在横滚筛选行的最后一个，会被滚出屏幕、也看不出当前在哪个模式）
+ */
+.picked-chip {
+  flex-shrink: 0;
+  /* .sec-head 是 baseline 对齐，胶囊要自己居中，不然会跟标题基线对齐显得偏高 */
+  align-self: center;
+  margin-left: 16rpx;
+}
+
+/* ---- 格子右上角的勾选标记 ---- */
+
+.pic-wrap {
+  position: relative;
+}
+
+.pick {
+  position: absolute;
+  right: 12rpx;
+  top: 12rpx;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  /* 浅色照片上也看得见：白色描边 + 淡投影 */
+  border: 3rpx solid rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 2rpx 8rpx rgba(74, 58, 92, 0.22);
+}
+
+.pick-on {
+  background: var(--brand);
+  border-color: #ffffff;
+}
+
+/* 主色圆上的白勾 */
+.pick-on::after {
+  content: '';
+  position: absolute;
+  left: 12rpx;
+  top: 5rpx;
+  width: 10rpx;
+  height: 18rpx;
+  border-right: 4rpx solid #ffffff;
+  border-bottom: 4rpx solid #ffffff;
+  transform: rotate(45deg);
+}
+
+/* 保存按钮走页面底部固定栏（app.wxss 的 .bar），本页不用额外样式 */

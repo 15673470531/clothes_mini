@@ -1,0 +1,37 @@
+<!-- AI 试穿：生成中（整屏不可关）/ 结果 / 失败 三态 -->
+<view class="page page-with-bar">
+
+  <!-- 生成中：整屏遮罩，点了没反应（用户选的口径：不可关，出图自动进结果态） -->
+  <view wx:if="{{state === 'loading'}}" class="mask">
+    <view class="mask-card">
+      <view class="spin"></view>
+      <view class="mask-t1">正在生成上身效果</view>
+      <view class="mask-t2">大约半分钟，先别退出</view>
+    </view>
+  </view>
+
+  <!-- 结果：大图 + 一行说明（点图看大图） -->
+  <block wx:elif="{{state === 'done'}}">
+    <view class="card pad shot-card">
+      <image class="shot" src="{{resultUrl}}" mode="widthFix" bindtap="onPreview"></image>
+    </view>
+    <view class="shot-hint">{{hint}}</view>
+    <view class="shot-tip">想看别的效果，点「试穿」可以再来一次</view>
+  </block>
+
+  <!-- 失败：说明 + 再来一次 -->
+  <view wx:else class="card pad fail-card">
+    <view class="fail-t">{{failText}}</view>
+    <view class="btn btn-primary fail-btn" hover-class="pressed" bindtap="onRetry">再试一次</view>
+  </view>
+
+  <view class="gap"></view>
+</view>
+
+<!-- 底部两个按钮：保存到相册 / 设为这套的封面 -->
+<view wx:if="{{state === 'done'}}" class="bar">
+  <view class="bar-btns">
+    <view class="btn btn-ghost" hover-class="pressed" bindtap="onSaveAlbum">保存到相册</view>
+    <view class="btn btn-primary" hover-class="pressed" bindtap="onSetCover">设为封面</view>
+  </view>
+</view>

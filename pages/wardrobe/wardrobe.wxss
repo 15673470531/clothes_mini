@@ -1,0 +1,101 @@
+/* 衣橱页：只留本页布局，共用件走 app.wxss */
+
+.overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 24rpx 32rpx;
+}
+
+.ov-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+}
+
+/* 右侧小插画：**做小一点**（2026-09 用户：别把卡片高度顶起来）。
+   210rpx 宽 × 2.13 比例 ≈ 99rpx 高，跟数字那一行的行高基本齐平 */
+.ov-pic {
+  width: 210rpx;
+  flex: 0 0 auto;
+}
+
+.ov-num {
+  font-size: var(--fs-page);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.5rpx;
+  /* 数字等宽，件数变化时不会左右跳 */
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-label {
+  font-size: var(--fs-sub);
+  color: var(--text-weak);
+}
+
+/* 品类筛选：横向滚动不换行（.cats / .cat 本体在 app.wxss） */
+.cats {
+  margin: 24rpx 0 16rpx;
+}
+
+/* ---- 二级类目条 ----
+ * 3~4 个细分 + 「全部」，一行 flex:1 均分（宽度走 app.wxss 的 .row5 / .cell），
+ * 不做换行 → 不会出现末行只剩一个的参差
+ *
+ * 观感跟一级胶囊保持一致：未选中就是纯文字、选中给浅紫底。
+ * 因为这条在页面底色上，格子的 --fill(#F4F0EA) 跟底色(#FBF8F4) 几乎同色，
+ * 照 .cell 默认渲染的话未选中看不见、选中的却带一圈描边，一行里像两种控件。
+ */
+.subs {
+  margin-bottom: 16rpx;
+}
+
+.subs .cell:not(.on) {
+  background: transparent;
+  border-color: transparent;
+}
+
+.subs .cell.on {
+  border-color: transparent;
+}
+
+/* ---- 图片墙 ----
+ * 布局走 app.wxss 的共用件（.wall / .wall-cell / .wall-pic / .wall-ph / .wall-text），
+ * 本页只补一个「照片存哪了」的小圆点
+ */
+
+/* 右下角小圆点：只给颜色，不写字（写字的版本 2026-09 复盘时去掉，照片太小、字压画面）
+ * 白圈 + 淡阴影是为了不管压在浅色衣服还是深色衣服上都看得见；
+ * 三态互斥、位置尺寸统一，同一张图只会有一个点 */
+.pend {
+  position: absolute;
+  right: 12rpx;
+  bottom: 12rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.45);   /* 兜底：未知状态用灰黑 */
+}
+
+/* 还没传到云端（本机有图、云端没地址） */
+.pend-wait {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* 已上传到对象存储 */
+.pend-oss {
+  background: var(--success);
+}
+
+/* 已上传到服务器本地盘（没配 OSS 时的兜底） */
+.pend-local {
+  background: var(--warning);
+}
+
+
+/* 空态插画（后端下发的透明底图；拿不到图就不渲染，只剩文字） */
+.empty-pic-wd { width: 400rpx; }

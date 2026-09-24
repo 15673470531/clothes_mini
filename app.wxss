@@ -1,0 +1,602 @@
+/* ==========================================================================
+ * clothes 全局样式
+ *
+ * 前 200 行 = 样式基线（年轻精致向，源自 question 实战值，全项目统一）
+ * 之后是本项目共用件（列表卡 / 缩略块 / 悬浮按钮）
+ *
+ * 规矩：页面 wxss 只写自己的布局，颜色圆角字号一律走 var()，不写字面量。
+ * ========================================================================== */
+
+page {
+  /* 主色：暮色灰紫（B），配暖白底 —— 换主题只改这一段
+   * 注意：阴影必须跟着走紫调。用蓝调 rgba(28,50,110,..) 的阴影压在暖白底上，
+   * 会浮出一层冷蓝雾，卡片看着发脏。 */
+  --brand: #5D4C7C;
+  --brand-light-blue: #8371A9;   /* 渐变的浅端（历史上叫 light-blue，名字保留） */
+  --brand-press: #4A3C66;
+  --brand-light: #EFEBF7;
+  --brand-grad: linear-gradient(135deg, #8371A9 0%, #5D4C7C 100%);
+
+  --bg: #FBF8F4;           /* 暖白 */
+  --card: #FFFFFF;
+  --shadow: 0 6rpx 28rpx rgba(74, 58, 92, 0.10);
+  --shadow-up: 0 -6rpx 24rpx rgba(74, 58, 92, 0.05);
+
+  --text: #221E2A;
+  --text-sub: #585064;
+  --text-weak: #8F8799;
+
+  --line: #EFE9E2;         /* 暖灰分隔线 */
+  --line-strong: #D8D1DC;  /* 需要更清晰的描边时用（空心勾选圈、虚线框） */
+  --fill: #F4F0EA;         /* 等宽格子的默认底色 */
+
+  --success: #10B981;
+  --success-bg: #E6F7F1;
+  --warning: #F59E0B;
+  --danger: #F4633A;
+  --danger-bg: #FFEDE6;
+
+  --fs-tiny: 24rpx;
+  --fs-sub: 28rpx;
+  --fs-body: 32rpx;
+  --fs-strong: 36rpx;
+  --fs-title: 44rpx;
+  --fs-page: 54rpx;
+
+  --r-card: 28rpx;
+  --r-pill: 999rpx;
+
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+}
+
+/* ---- 全局盒模型：必须显式设成 border-box ----
+ * 小程序默认是 content-box（跟浏览器一致），于是「宽度固定的格子 + 选中时加边框」
+ * 会让元素变大：3 列格子各宽 4rpx，一行超出 12rpx，第三个直接被挤到下一行
+ * （记录衣物页实测：品类本应 3 个一行，变成 2+2+2，且选中格比旁边大一圈）。
+ * 白底圆点 .dot-light、浅色缩略块 .thumb-light 也都是加边框变大，同样靠这条兜住。
+ */
+view,
+text,
+image,
+input,
+textarea,
+scroll-view,
+button {
+  box-sizing: border-box;
+}
+
+/* 页面容器：左右与顶部留白（padding-bottom 由 .page-with-tab 覆盖，注意顺序） */
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 0;
+}
+
+.page-with-tab {
+  padding-bottom: calc(164rpx + env(safe-area-inset-bottom));
+}
+
+.page-with-bar {
+  padding-bottom: calc(190rpx + env(safe-area-inset-bottom));
+}
+
+/* ---- 通用块 ---- */
+
+.card {
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+/* ---- 文字 ---- */
+
+.t-sub  { color: var(--text-sub); }
+.t-weak { color: var(--text-weak); }
+
+/* ---- 按钮 ---- */
+
+.btn {
+  height: 100rpx;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-strong);
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn-primary {
+  background: var(--brand-grad);
+  color: #ffffff;
+  box-shadow: 0 12rpx 28rpx rgba(93, 76, 124, 0.28);
+}
+
+/* 组合态：hover-class 只写 "pressed"
+ * 坑：hover-class 里绝不能带元素自己已有的类名（写成 "btn-primary pressed" 时，
+ * 松手会把 btn-primary 一起摘掉，按钮变透明 → 露出底部栏白底，看着就是「按钮变白」）。
+ */
+.btn-primary.pressed {
+  opacity: 0.86;
+}
+
+.btn-ghost {
+  background: #ffffff;
+  color: var(--text-sub);
+  border: 2rpx solid var(--line);
+}
+
+/* ---- 右缘 chevron（可点入口的静态暗示；独立元素） ---- */
+
+.chevron {
+  width: 18rpx;
+  height: 18rpx;
+  border-right: 3rpx solid #B3ACBB;
+  border-bottom: 3rpx solid #B3ACBB;
+  transform: rotate(-45deg);
+  flex-shrink: 0;
+}
+
+/* ---- 区块标题（各页共用） ---- */
+
+.sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 34rpx 32rpx 20rpx;
+}
+
+.sec-title {
+  font-size: var(--fs-strong);
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+}
+
+.sec-head .t-weak {
+  font-size: var(--fs-tiny);
+}
+
+/* ---- 底部固定操作栏（底部按钮常驻，不用滚到页尾） ---- */
+
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  box-shadow: var(--shadow-up);
+  z-index: 100;
+}
+
+.bar-btns {
+  display: flex;
+  gap: 20rpx;
+}
+
+/* 操作栏里的按钮：次要按钮按内容宽 + 左右留白，主按钮吃掉剩余宽度
+   （.btn 本身没有 padding/flex，不在这里补就会出现「文字贴边、主按钮被挤成一小坨」） */
+.bar-btns .btn-ghost {
+  padding: 0 40rpx;
+  flex-shrink: 0;
+  font-size: var(--fs-sub);
+}
+
+.bar-btns .btn-primary {
+  flex: 1;
+}
+
+/* ---- 区块标题后缀（可多选 / 必选 这类弱化说明，不单独占一行） ---- */
+
+.sec-opt {
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  font-weight: 400;
+  margin-left: 12rpx;
+}
+
+/* ---- 标签 / 筛选胶囊 ---- */
+
+.tag {
+  font-size: var(--fs-tiny);
+  line-height: 1;
+  padding: 10rpx 20rpx;
+  border-radius: var(--r-pill);
+  font-weight: 500;
+}
+
+.tag-on {
+  color: var(--brand);
+  background: var(--brand-light);
+}
+
+.tag-off {
+  color: var(--text-weak);
+  background: var(--fill);
+}
+
+/* ---- 空状态 ---- */
+
+.empty {
+  text-align: center;
+  color: var(--text-weak);
+  font-size: var(--fs-sub);
+  padding: 70rpx 40rpx 90rpx;
+}
+
+/* 空态插画 + 宣传语（2026-09 用户要的：页面太单调）
+ * 图由后端下发（utils/assets.js）；**拿不到图就只有文字，跟以前一样**，不会出现破图或空块 */
+.empty-img {
+  display: block;
+  margin: 0 auto 26rpx;
+}
+
+.empty-slogan {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.empty-text {
+  display: block;
+}
+
+/* ==========================================================================
+ * 以下是 clothes 项目共用件
+ * ========================================================================== */
+
+/* 列表卡：衣橱 / 我的 / 多选列表共用 */
+.list {
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.list-row:last-child {
+  border-bottom: none;
+}
+
+/* 列表行里的缩略块：有照片显示照片，没有则「颜色块 + 品类图标」 */
+.thumb {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.thumb-light {
+  border: 2rpx solid var(--line);
+}
+
+.thumb-emoji {
+  font-size: 44rpx;
+}
+
+/* 图片墙（衣橱页 / 新建搭配页共用）
+ * 3 列：可用宽 702rpx（750 − 页面左右各 24），减 2 个 16rpx 间距后每格 223rpx，
+ * 格子做成正方形（高度取同一个值，跟宽度对齐）
+ */
+.wall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.wall-cell {
+  width: calc((100% - 32rpx) / 3);
+  /* 照片还没上传时的角标要贴着格子右下角定位 */
+  position: relative;
+}
+
+.wall-pic {
+  width: 100%;
+  height: 223rpx;
+  border-radius: 20rpx;
+  background: var(--fill);
+  display: block;
+}
+
+/* 没照片时的占位块：颜色块 + 品类图标（居中） */
+.wall-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wall-text {
+  margin-top: 10rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  text-align: center;
+  /* 名称过长截断，不撑破格子 */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 品类筛选行（衣橱 / 新建搭配共用）：横向滚动不换行，保证布局确定 */
+.cats {
+  white-space: nowrap;
+}
+
+.cat {
+  display: inline-block;
+  margin-right: 16rpx;
+  padding: 14rpx 30rpx;
+  font-size: var(--fs-sub);
+}
+
+/* ---- 穿搭位图（穿搭列表卡片 / 搭配预览页共用）----
+ * 上身 / 下身 / 脚 三段 + 右侧配饰列；格子尺寸走 --tile（默认预览页 180rpx，
+ * 列表卡片在页面 wxss 里改小）。空格是虚线占位 → 每张卡片格子位置、高度都一致。
+ */
+.pos-body {
+  --tile: 180rpx;
+  display: flex;
+  justify-content: center;
+  gap: 20rpx;
+}
+
+.pos-main,
+.pos-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.pos-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.pos-slot {
+  position: relative;         /* 给格子右上角的「移出 ×」当定位基准 */
+  width: var(--tile);
+  height: var(--tile);
+  flex-shrink: 0;
+}
+
+/* 衣物格子右上角的「移出」×：把这件从这套搭配里移出（衣物还在衣橱）
+ * 压在图角上、半透明，不遮衣物主体；尺寸/位置都不动格子本身 */
+.pos-del {
+  position: absolute;
+  right: -10rpx;
+  top: -10rpx;
+  z-index: 3;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: rgba(20, 23, 29, 0.55);
+  color: #ffffff;
+  font-size: 30rpx;
+  line-height: 48rpx;
+  text-align: center;
+}
+
+.pos-img {
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: 20rpx;
+  background: var(--bg);
+  display: block;
+}
+
+.pos-block {
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pos-block-light {
+  border: 2rpx solid var(--line);
+}
+
+/* 图标跟着格子缩放（180rpx 时约 72rpx） */
+.pos-emoji {
+  font-size: calc(var(--tile) * 0.4);
+}
+
+.pos-blank {
+  border: 2rpx dashed var(--line-strong);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 空格里只留一个极淡的 ＋（暗示这里能点/能放），不写「＋外套」这类品类提示
+ * —— 2026-09 用户要求：放什么由自己拖决定，不预设位置该放什么 */
+.pos-add {
+  color: var(--line-strong);
+  font-size: calc(var(--tile) * 0.26);
+  font-weight: 300;
+  line-height: 1;
+}
+
+/* ---- 拖拽换位置（搭配预览页）---- */
+
+/* 落点格高亮 */
+.pos-hot {
+  border-color: var(--brand);
+}
+
+/* 被拖起来的源格淡出 */
+.pos-source {
+  opacity: 0.3;
+}
+
+/* 跟手的「幽灵」：原格留在原地，这个跟着手指走（fixed 定位，所以要自己带 --tile） */
+.pos-ghost {
+  --tile: 180rpx;
+  position: fixed;
+  z-index: 200;
+  width: 180rpx;
+  height: 180rpx;
+  transform: translate(-50%, -50%);
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+/* 同类超出上限：占一格显示 +N */
+.pos-more {
+  border-radius: 20rpx;
+  background: var(--fill);
+  color: var(--text-sub);
+  font-size: var(--fs-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 悬浮录入入口（衣橱 / 穿搭共用，位于底导上方） */
+.fab {
+  position: fixed;
+  right: 32rpx;
+  bottom: calc(144rpx + env(safe-area-inset-bottom));
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: var(--brand-grad);
+  color: #ffffff;
+  font-size: 56rpx;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 28rpx rgba(93, 76, 124, 0.32);
+  z-index: 90;
+}
+
+.fab:active {
+  opacity: 0.86;
+}
+
+/* 悬浮按钮下面留白，避免盖住最后一行 */
+.gap {
+  height: 150rpx;
+}
+
+/* ---- 等宽选择格（品类 / 季节 / 场合共用；等宽是为了不出现参差） ---- */
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.cell {
+  height: 88rpx;
+  border-radius: 16rpx;
+  background: var(--fill);
+  border: 2rpx solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sub);
+  color: var(--text-sub);
+}
+
+.cell.on {
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* 小一号的等宽格：二级类目（一行放 3~5 个，字 24rpx，3 个字也不折行） */
+.cell-sm {
+  height: 76rpx;
+  padding: 0 8rpx;
+  font-size: var(--fs-tiny);
+  white-space: nowrap;
+}
+
+/* 3 列等宽（品类 6 项 → 3×2） */
+.col3 {
+  width: calc((100% - 32rpx) / 3);
+}
+
+/* 单行等宽：4 项季节、5 项场合都排一行，避免末行只剩一个的参差 */
+.row5 {
+  display: flex;
+  gap: 16rpx;
+}
+
+.row5 .cell {
+  flex: 1;
+}
+
+/* ---- 表单：输入框与多选胶囊组 ---- */
+.form-input {
+  font-size: var(--fs-body);
+}
+
+.form-ph {
+  color: var(--text-weak);
+}
+
+/* 名称行（iOS 风格：左标签 + 右输入）——记录衣物页 / 搭配预览页共用 */
+.name-row {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+}
+
+.name-label {
+  width: 120rpx;
+  flex-shrink: 0;
+  font-size: var(--fs-sub);
+  color: var(--text-sub);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.chip {
+  padding: 14rpx 30rpx;
+  font-size: var(--fs-sub);
+}
+
+/* 带内边距的卡片（表单行、说明卡） */
+.pad {
+  padding: 32rpx;
+}
+
+/* 卡内小标签（12px 灰字，替代原来的大标题） */
+.label {
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  margin-bottom: 16rpx;
+}
+
+/* 卡内分割线 */
+.divider {
+  height: 2rpx;
+  background: var(--line);
+  margin: 32rpx 0;
+}
+
+/* 品类胶囊已改为等宽格（.cell / .col3），.chip-cat 不再需要 */

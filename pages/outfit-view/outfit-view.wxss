@@ -1,0 +1,57 @@
+/* 搭配预览页：只留本页布局（卡片/胶囊/底栏/位图走 app.wxss） */
+
+/* 名称行（.name-row / .name-label 在 app.wxss，跟记录衣物页共用同一套）
+ * 输入框占满剩余宽度，右边留「N 件」 */
+.pv-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.pv-count {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* 位图画布：现在排第一张卡（整块居中；.pos-* 全套在 app.wxss，格子用默认 180rpx） */
+.pv-canvas {
+  margin-top: 0;
+}
+
+/* 名称 / 场合卡：跟在九宫格下面 */
+.pv-info {
+  margin-top: 24rpx;
+}
+
+/* 空格提示：只留极淡的 ＋（.pos-add 在 app.wxss；这里没有品类文字了） */
+.pv-hint {
+  margin-top: 20rpx;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* 出图用的隐藏画布：canvas 是原生组件，挪到屏幕外，别遮挡页面 */
+.shot-canvas {
+  position: fixed;
+  left: -9999rpx;
+  top: 0;
+  width: 375px;
+  height: 375px;
+}
+
+.pv-warn {
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--warning);
+}
+
+/* 新建流程的提醒：这页点「完成」才保存（主题色，比 hint 显眼但不报警） */
+.pv-draft {
+  margin-top: 10rpx;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--brand);
+}

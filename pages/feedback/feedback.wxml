@@ -1,0 +1,21 @@
+<view class="page page-with-bar">
+
+  <view class="card pad fb-card">
+    <textarea
+      class="fb-input"
+      placeholder="说说你的想法：想要什么功能、哪里不好用、哪里看着别扭…"
+      placeholder-class="form-ph"
+      value="{{content}}"
+      maxlength="1000"
+      bindinput="onInput"
+      auto-height
+      adjust-position />
+    <view class="fb-count">{{content.length}}/1000</view>
+  </view>
+
+  <view class="bar">
+    <view class="bar-btns">
+      <view class="btn btn-primary" hover-class="pressed" bindtap="onSubmit">提交反馈</view>
+    </view>
+  </view>
+</view>

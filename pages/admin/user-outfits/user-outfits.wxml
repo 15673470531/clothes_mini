@@ -1,0 +1,50 @@
+<view class="page">
+
+  <!-- 顶部：看的是谁 + 一共多少套 -->
+  <view class="card head" wx:if="{{user}}">
+    <image class="h-av" wx:if="{{user.avatarUrl}}" src="{{user.avatarUrl}}" mode="aspectFill"></image>
+    <view class="h-av h-av-ph" wx:else>👤</view>
+    <view class="h-main">
+      <view class="h-line1">
+        <text class="h-name" wx:if="{{user.name || user.nickname}}">{{user.name || user.nickname}}</text>
+        <text class="h-tag" wx:if="{{user.isAdmin}}">管理员</text>
+      </view>
+      <text class="h-sub">#{{user.id}} · {{headSub}}</text>
+    </view>
+  </view>
+
+  <view class="card tip" wx:if="{{loading && list.length == 0}}">加载中…</view>
+  <view class="card tip tip-err" wx:if="{{error}}">{{error}}</view>
+
+  <!-- 2 列大图：封面 / 没封面用第一件衣物顶着；右上角件数角标、右下角小圆点挂牌 -->
+  <view wx:if="{{list.length}}" class="wall2">
+    <view
+      wx:for="{{list}}"
+      wx:key="id"
+      wx:for-index="idx"
+      class="w2-cell"
+      bindtap="onPreview"
+      data-idx="{{idx}}">
+      <view class="w2-pic">
+        <image wx:if="{{item.image}}" class="w2-img" src="{{item.image}}" mode="aspectFill"></image>
+        <view wx:else class="w2-img w2-ph {{item.light ? 'thumb-light' : ''}}" style="background:{{item.color}}">
+          <text class="thumb-emoji">{{item.emoji}}</text>
+        </view>
+        <!-- 件数角标（右上角）；有衣物被删显示警示色的「缺N」 -->
+        <view class="badge {{item.badgeWarn ? 'badge-warn' : ''}}">{{item.badge}}</view>
+        <!-- 右下角小圆点：封面存哪了（绿=对象存储 / 黄=服务器本地盘），跟件数角标错开 -->
+        <view wx:if="{{item.badgeKind}}" class="pend pend-{{item.badgeKind}}"></view>
+      </view>
+      <view class="w2-cap">
+        <text class="w2-name">{{item.name}}</text>
+        <text class="w2-date" wx:if="{{item.date}}">{{item.date}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && !error && list.length === 0}}">这个人还没建过搭配</view>
+
+  <view class="foot" wx:if="{{list.length}}">只读：管理端只能看，不能改别人的搭配</view>
+  <view class="foot" wx:if="{{list.length > 0 && page >= lastPage}}">— 没有更多了 —</view>
+
+</view>

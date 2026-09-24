@@ -1,0 +1,56 @@
+{
+  "pages": [
+    "pages/wardrobe/wardrobe",
+    "pages/outfit/outfit",
+    "pages/outfit-edit/outfit-edit",
+    "pages/outfit-view/outfit-view",
+    "pages/tryon/tryon",
+    "pages/item-edit/item-edit",
+    "pages/calendar/calendar",
+    "pages/mine/mine",
+    "pages/hanger/hanger",
+    "pages/reward/reward",
+    "pages/feedback/feedback",
+    "pages/about/about",
+    "pages/service/service",
+    "pages/admin/stats/stats",
+    "pages/admin/users/users",
+    "pages/admin/user-items/user-items",
+    "pages/admin/user-outfits/user-outfits"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#fbf8f4",
+    "navigationBarTitleText": "海豚衣橱",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#fbf8f4",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#8f8799",
+    "selectedColor": "#5D4C7C",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/wardrobe/wardrobe",
+        "text": "衣橱"
+      },
+      {
+        "pagePath": "pages/outfit/outfit",
+        "text": "穿搭"
+      },
+      {
+        "pagePath": "pages/calendar/calendar",
+        "text": "日历"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

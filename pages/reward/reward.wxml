@@ -1,0 +1,75 @@
+<!-- 赚衣架（从「我的」页衣架卡右侧「获取更多」进来）：签到 / 分享 / 新用户每月免费领取 -->
+<view class="page">
+
+  <!-- 当前衣架：可用 / 总数（数字全部后端下发；拿不到就不显示，别显示成 0 误导人） -->
+  <view wx:if="{{ready}}" class="card hero">
+    <view class="hero-nums">
+      <text class="hn-val hn-{{totalState}}">{{heroText}}</text>
+      <text class="hn-label">可用 / 总数</text>
+    </view>
+  </view>
+
+  <!-- 能拿衣架的几项：三个都要点（签到 / 分享 / 新用户每月免费领取） -->
+  <view class="card sec">
+    <view class="rw">
+      <view class="rw-info">
+        <text class="rw-name">每日签到</text>
+        <text class="rw-desc">{{checkinDesc}}</text>
+      </view>
+      <view
+        class="rw-btn {{checkinOn ? 'rw-btn-on' : 'rw-btn-off'}}"
+        hover-class="{{checkinOn ? 'rw-btn-active' : ''}}"
+        bindtap="onCheckin">{{checkinBtn}}</view>
+    </view>
+
+    <view class="rw rw-line">
+      <view class="rw-info">
+        <text class="rw-name">分享群或者好友</text>
+        <text class="rw-desc">{{shareDesc}}</text>
+      </view>
+      <!-- 分享必须用 open-type="share" 的原生按钮，微信才允许拉起转发面板。
+           按钮**样式和文字固定成"可点"**（用户 2026-09 定）：就算今天已经领过奖励，
+           这一行也不灰掉、文字也不变成"明天再来" —— 分享本身就值得鼓励；
+           领没领过写在上面那行说明里（{{shareDesc}}） -->
+      <button
+        class="rw-btn rw-btn-on"
+        hover-class="rw-btn-active"
+        open-type="share">分享群或者好友</button>
+    </view>
+
+    <!-- 新用户每月免费领取：每月 1 次，点一下「领取」才到账；领过就显示「本月已领取」（文案全由后端下发） -->
+    <view wx:if="{{newcomerOn}}" class="rw rw-line">
+      <view class="rw-info">
+        <text class="rw-name">{{newcomerTitle}}</text>
+        <text class="rw-desc">{{newcomerDesc}}</text>
+      </view>
+      <view
+        wx:if="{{canNewcomer}}"
+        class="rw-btn rw-btn-on"
+        hover-class="rw-btn-active"
+        bindtap="onClaimNewcomer">{{newcomerBtn}}</view>
+      <text wx:else class="rw-state">{{newcomerStateText}}</text>
+    </view>
+  </view>
+
+  <!-- 衣架流水（2026-09 用户要的）：最近领到的记录，新的在前。
+       一行一条：左边奖励名 + 紧跟的日期小字，右边 +N 对齐（数字才是重点）。
+       标题/日期/累计/条数说明都由后端下发（前端不拼字符串） -->
+  <view class="card sec">
+    <view class="lg-head">
+      <text class="lg-title">{{logsTitle}}</text>
+      <text wx:if="{{logsTotal}}" class="lg-total">{{logsTotal}}</text>
+    </view>
+
+    <block wx:if="{{logs.length}}">
+      <view class="lg-row" wx:for="{{logs}}" wx:key="index">
+        <text class="lg-name">{{item.title}}</text>
+        <text class="lg-date">{{item.dateText}}</text>
+        <text class="lg-amount">+{{item.amount}}</text>
+      </view>
+      <view wx:if="{{logsNote}}" class="lg-note">{{logsNote}}</view>
+    </block>
+
+    <view wx:else class="lg-empty">{{logsEmpty}}</view>
+  </view>
+</view>

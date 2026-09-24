@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "用户名单",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 120,
+  "backgroundColor": "#FBF8F4",
+  "backgroundTextStyle": "dark"
+}

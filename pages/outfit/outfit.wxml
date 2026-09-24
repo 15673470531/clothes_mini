@@ -1,0 +1,54 @@
+<view class="page page-with-tab">
+
+  <!-- 场合分类（筛选行）。
+       2026-09：这里原来放过一个「试穿 ›」胶囊进 2D 人台 demo，人台已删除，
+       AI 试穿改在搭配预览页底部（pages/tryon），筛选行恢复成单纯的筛选。 -->
+  <scroll-view class="cats" scroll-x>
+    <view
+      wx:for="{{occChips}}"
+      wx:key="key"
+      class="tag cat {{occKey === item.key ? 'tag-on' : ''}}"
+      bindtap="onOcc"
+      data-key="{{item.key}}">{{item.name}}</view>
+  </scroll-view>
+
+  <!-- 3 列缩略图：点进预览页，长按删除 -->
+  <view wx:if="{{outfits.length}}" class="wall oc-wall">
+    <view
+      wx:for="{{outfits}}"
+      wx:key="id"
+      class="wall-cell oc-cell"
+      bindtap="onOpenOutfit"
+      bindlongpress="onLongPressOutfit"
+      data-id="{{item.id}}"
+      data-name="{{item.name}}">
+
+      <view class="oc-pic">
+        <!-- 正式图片：预览页点完成时生成的方图 -->
+        <image wx:if="{{item.photo}}" class="wall-pic" src="{{item.photo}}" mode="aspectFill"></image>
+        <!-- 还没生成图片：用这套里第一件衣物顶着 -->
+        <block wx:else>
+          <image wx:if="{{item.thumb.image}}" class="wall-pic" src="{{item.thumb.image}}" mode="aspectFill"></image>
+          <view wx:else class="wall-pic wall-ph {{item.thumb.light ? 'thumb-light' : ''}}" style="background:{{item.thumb.color}}">
+            <text class="thumb-emoji">{{item.thumb.emoji}}</text>
+          </view>
+        </block>
+        <!-- 角标：件数 / 缺N（右上角） -->
+        <view class="oc-badge {{item.badgeWarn ? 'oc-badge-warn' : ''}}">{{item.badge}}</view>
+        <!-- 右下角小圆点：封面存哪了（绿=OSS / 黄=服务器本地盘），跟右上角件数角标错开 -->
+        <view wx:if="{{item.coverBadgeKind}}" class="oc-store oc-store-{{item.coverBadgeKind}}"></view>
+      </view>
+
+      <view class="wall-text">{{item.name}}</view>
+    </view>
+  </view>
+
+  <view wx:else class="empty">
+    <image wx:if="{{emptyReal && emptyPic}}" class="empty-img empty-pic-ot"
+      src="{{emptyPic}}" mode="widthFix" lazy-load binderror="onEmptyPicErr"></image>
+    <text class="empty-text">{{emptyText}}</text>
+  </view>
+
+  <view class="gap"></view>
+  <view class="fab" bindtap="onAdd">＋</view>
+</view>

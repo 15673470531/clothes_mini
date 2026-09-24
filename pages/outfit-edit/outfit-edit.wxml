@@ -1,0 +1,52 @@
+<view class="page page-with-bar">
+
+  <!-- 从衣橱里选衣物（名称和场合不在这页填：预览页里都能改，2026-09 用户要求去掉） -->
+  <view class="sec-head">
+    <text class="sec-title">从衣橱里选衣物</text>
+    <!-- 「已选 N/9」：点了切到只看已勾选的（放在标题行右侧，不用横滚就能看到） -->
+    <view
+      wx:if="{{selectedCount > 0}}"
+      class="tag picked-chip {{onlyPicked ? 'tag-on' : 'tag-off'}}"
+      bindtap="onOnlyPicked">已选 {{selectedCount}}/{{max}}</view>
+    <text wx:else class="t-weak">已选 0/{{max}}</text>
+  </view>
+
+  <!-- 品类筛选：全部 + 6 个品类（横向滚动） -->
+  <scroll-view class="cats" scroll-x>
+    <view
+      wx:for="{{cats}}"
+      wx:key="key"
+      class="tag cat {{catKey === item.key && !onlyPicked ? 'tag-on' : ''}}"
+      bindtap="onCat"
+      data-key="{{item.key}}">{{item.name}}</view>
+  </scroll-view>
+
+  <view wx:if="{{!hasItems}}" class="empty">衣橱还是空的，先去衣橱添加衣物</view>
+  <view wx:elif="{{list.length === 0}}" class="empty">{{emptyText}}</view>
+
+  <!-- 图片墙：点格子 = 切换勾选，勾选标记在右上角 -->
+  <view wx:else class="wall">
+    <view
+      wx:for="{{list}}"
+      wx:key="id"
+      class="wall-cell"
+      bindtap="onToggleItem"
+      data-id="{{item.id}}">
+      <view class="pic-wrap">
+        <image wx:if="{{item.image}}" class="wall-pic" src="{{item.image}}" mode="aspectFill"></image>
+        <view wx:else class="wall-pic wall-ph {{item.light ? 'thumb-light' : ''}}" style="background:{{item.color}}">
+          <text class="thumb-emoji">{{item.emoji}}</text>
+        </view>
+        <view class="pick {{item.on ? 'pick-on' : ''}}"></view>
+      </view>
+      <view class="wall-text">{{item.name}}</view>
+    </view>
+  </view>
+
+  <view class="bar">
+    <view class="bar-btns">
+      <!-- 新建和编辑都叫「选择搭配」：这页只挑衣物，点预览页的「完成」才真正保存（2026-09 用户定） -->
+      <view class="btn btn-primary" hover-class="pressed" bindtap="onSave">选择搭配</view>
+    </view>
+  </view>
+</view>

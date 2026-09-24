@@ -1,0 +1,385 @@
+/* 我的页：只留本页布局（card / list / chevron / 按钮 token 都在 app.wxss）
+ * 结构照 money 的「我的」页：通栏渐变头（未登录居中 / 已登录一行）+ 图标菜单 + 白底红字退出
+ */
+
+/* ---- 通栏渐变头 ---- */
+
+.me-head {
+  /* 负 margin 抵掉 .page 的 24rpx 左/上留白，做通栏（app.wxss 里 .page 的 padding 改了这里也要改） */
+  margin: -24rpx -24rpx 0;
+  padding: 48rpx 32rpx 56rpx;
+  background: var(--brand-grad);
+  border-radius: 0 0 40rpx 40rpx;
+}
+
+/* 未登录：居中排列 */
+.me-head-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 已登录：头像 + 信息一行 */
+.me-head-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24rpx;
+}
+
+/* 头像：120rpx 圆 + 半透明白描边（跟 money 同尺寸） */
+.me-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.18);
+  display: block;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.me-avatar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.me-avatar-emoji {
+  font-size: 56rpx;
+}
+
+/* 头像容器：定尺寸 + 定位基准（不靠 button 自己的宽高，避开微信默认宽度 184px） */
+.me-avatar-wrap {
+  position: relative;
+  width: 120rpx;
+  height: 120rpx;
+  flex-shrink: 0;
+}
+
+/* 头像本身是 chooseAvatar 按钮（点了换头像）：绝对铺满容器，宽度由 inset 决定 */
+.me-avatar-btn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  line-height: 1;
+}
+
+.me-avatar-btn::after {
+  border: none;
+}
+
+/* 头像在按钮里铺满 */
+.me-avatar-btn .me-avatar {
+  width: 100%;
+  height: 100%;
+}
+
+/* 未登录状态的标题 / 说明（白字） */
+.me-title {
+  margin-top: 24rpx;
+  font-size: var(--fs-strong);
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.me-desc {
+  margin-top: 8rpx;
+  font-size: var(--fs-tiny);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* 登录按钮：白底主题字（在渐变头上，主色按钮会糊在一起） */
+.me-login-btn {
+  width: 380rpx;
+  height: 88rpx;
+  margin-top: 36rpx;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: #ffffff;
+  color: var(--brand);
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  line-height: 88rpx;
+  text-align: center;
+}
+
+.me-login-btn::after {
+  border: none;
+}
+
+.me-login-btn.pressed {
+  opacity: 0.86;
+}
+
+/* ---- 已登录：右侧信息列 ---- */
+
+.me-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.me-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 0;
+}
+
+.me-name {
+  font-size: var(--fs-strong);
+  font-weight: 700;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 「修改」：白色小字（可点暗示） */
+.me-name-edit {
+  flex-shrink: 0;
+  font-size: var(--fs-tiny);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.me-id {
+  font-size: var(--fs-tiny);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.me-hint {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 改昵称：输入框 + 保存（在渐变头上，用半透明白底） */
+.me-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.me-name-input {
+  flex: 1;
+  min-width: 0;
+  height: 68rpx;
+  padding: 0 24rpx;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: var(--fs-sub);
+}
+
+.me-input-ph {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.me-save {
+  flex-shrink: 0;
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* ---- 菜单（圆形图标 + 标题/说明 + 箭头） ---- */
+
+.me-menu {
+  margin-top: 24rpx;
+}
+
+.me-item {
+  display: flex;
+  align-items: center;
+  padding: 26rpx 32rpx;
+  border-bottom: 2rpx solid var(--line);
+}
+
+.me-item:last-child {
+  border-bottom: none;
+}
+
+.me-item-active {
+  background: var(--fill);
+}
+
+/* 图标：72rpx 圆形浅蓝底（跟 money 同尺寸，颜色走本项目 token） */
+.me-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: var(--brand-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+
+.me-item-info {
+  flex: 1;
+  min-width: 0;
+  margin: 0 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.me-item-title {
+  font-size: var(--fs-sub);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.me-item-desc {
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- 衣架卡（2026-09 第三版：整行一张浅透明白卡）----
+ * 为什么是整行：要同时放"可用 / 总数"两个数字 + 一个「获取更多」按钮，窄药丸塞不下。
+ * 为什么浅白半透明而不是白底：压在品牌渐变上，白底太跳；半透明的才像"贴在头上"的一层。
+ * 数字随剩余变色（剩得少=暖黄、用完=浅红），形状不变 —— 变的只是数字颜色。
+ */
+
+.hc {
+  flex: 0 0 100%;          /* 配合 .me-head-row 的 flex-wrap：独占第二行 */
+  margin-top: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14rpx 16rpx 14rpx 20rpx;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1rpx solid rgba(255, 255, 255, 0.22);
+}
+
+/* 左半区（点它进衣架说明页）：衣架图标 + "可用 / 总数" */
+.hc-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.hc-main-active { opacity: 0.7; }
+
+.hc-ico {
+  width: 30rpx;
+  height: 30rpx;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 30rpx 30rpx;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utb3BhY2l0eT0iMC45IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTIgMy42YTIuMiAyLjIgMCAwIDEgMS4yIDQuMWMtLjUuMy0uNy42LS43IDEuMXYxLjFsNy4zIDUuMWMuNi40LjMgMS40LS41IDEuNEg0LjdjLS44IDAtMS4xLTEtLjUtMS40bDcuMy01LjFWOC44YzAtLjUtLjItLjgtLjctMS4xQTIuMiAyLjIgMCAwIDEgMTIgMy42eiIvPjwvc3ZnPg==");
+}
+
+.hc-num {
+  font-size: 26rpx;
+  font-weight: 600;
+  letter-spacing: 0.4rpx;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+}
+
+.hc-low .hc-num { color: #F2CE86; }
+.hc-none .hc-num { color: #FFA8A8; }
+
+/* 右侧「获取更多」：白底胶囊 + 主题色字 —— 渐变头上这一处实心按钮，一眼看出能点 */
+.hc-more {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-left: 16rpx;
+  padding: 10rpx 16rpx;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.hc-more-active { opacity: 0.8; }
+
+.hc-more-t {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+/* 右缘小 ›：静态暗示"这儿能点"（跟项目其他可点入口一个口径） */
+.hc-more-arw {
+  font-size: 24rpx;
+  line-height: 1;
+  color: var(--brand);
+  opacity: 0.6;
+}
+
+/* ---- 退出登录：白底红字 ---- */
+
+.me-logout {
+  margin-top: 24rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--danger);
+  font-size: var(--fs-strong);
+  font-weight: 600;
+}
+
+.me-logout-active {
+  background: var(--danger-bg);
+}
+
+/* ---- 底部说明 ---- */
+
+.note {
+  padding: 32rpx;
+  margin-top: 24rpx;
+}
+
+.note-title {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+}
+
+.note-desc {
+  margin-top: 12rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+
+/* ---- 本页图标（主题色线性图标，base64 内联 SVG）---- */
+.me-ico {
+  width: 40rpx;
+  height: 40rpx;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 40rpx 40rpx;
+}
+.ico-feedback { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNUQ0QzdDIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAuNCAxMi42YTIuMyAyLjMgMCAwIDEtMi4zIDIuM0g4LjZsLTQgMy40VjYuM0EyLjMgMi4zIDAgMCAxIDYuOSA0aDExLjJhMi4zIDIuMyAwIDAgMSAyLjMgMi4zeiIvPjxwYXRoIGQ9Ik04LjggOS4xaDYuNCIvPjxwYXRoIGQ9Ik04LjggMTIuMWgzLjkiLz48L3N2Zz4="); }
+/* 数据统计：柱状图（同一套画法：24 网格 / 1.8 描边 / 主题色） */
+.ico-stats { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNUQ0QzdDIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMy44IDE5LjZoMTYuNCIvPjxwYXRoIGQ9Ik03LjEgMTkuNnYtNS4yIi8+PHBhdGggZD0iTTEyIDE5LjZWNi40Ii8+PHBhdGggZD0iTTE2LjkgMTkuNnYtOC4xIi8+PC9zdmc+"); }
+/* 客服：耳机 + 麦克风（同一套画法：24 网格 / 1.8 描边 / 主题色） */
+.ico-service { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNUQ0QzdDIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNC42IDE0LjJ2LTIuMWE3LjQgNy40IDAgMCAxIDE0LjggMHYyLjEiLz48cmVjdCB4PSIzIiB5PSIxMy4yIiB3aWR0aD0iMy44IiBoZWlnaHQ9IjYiIHJ4PSIxLjkiLz48cmVjdCB4PSIxNy4yIiB5PSIxMy4yIiB3aWR0aD0iMy44IiBoZWlnaHQ9IjYiIHJ4PSIxLjkiLz48cGF0aCBkPSJNMjAuMiAxOS4ydi4zYTIuNiAyLjYgMCAwIDEtMi42IDIuNkgxMyIvPjwvc3ZnPg=="); }
+
+/* 额度那行的样式已随方案 1 一起收掉（信息挪到菜单里的「衣架」行 + 衣架说明页） */
+

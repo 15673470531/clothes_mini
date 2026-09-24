@@ -1,0 +1,111 @@
+<view class="page">
+
+  <!-- 应用信息：横幅插画 + 名字 + 一句话 + 版本
+       （插画由后端下发：换图不用发版、拿不到就只显示文字） -->
+  <view class="card hero">
+    <image wx:if="{{heroPic}}" class="hero-pic" src="{{heroPic}}" mode="widthFix" lazy-load binderror="onHeroPicErr"></image>
+    <view class="hero-name">海豚衣橱</view>
+    <view class="hero-tag">{{slogan}}</view>
+    <view class="hero-ver">版本 v{{version}}</view>
+  </view>
+
+  <!-- 衣橱 -->
+  <view class="card sec">
+    <view class="sec-title">衣橱</view>
+    <view class="feat">
+      <text class="feat-name">拍照录入</text>
+      <text class="feat-desc">先选照片再填信息，只有照片和品类必填，颜色、季节、场合都有默认值，录一件很快。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">一次录多件</text>
+      <text class="feat-desc">相册里一次最多挑 9 张，每张各填各的，也可以勾上「剩下都用这套属性」一次录完。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">分类筛选</text>
+      <text class="feat-desc">按一级品类挑，再选二级类目细分；「全部」里就是所有衣物。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">图片墙</text>
+      <text class="feat-desc">点格子进编辑，长按格子删除。没有照片时用品类图标配色块显示，不会空着。</text>
+    </view>
+  </view>
+
+  <!-- 穿搭 -->
+  <view class="card sec">
+    <view class="sec-title">穿搭</view>
+    <view class="feat">
+      <text class="feat-name">九格位图</text>
+      <text class="feat-desc">上装、下装、鞋分三段，右边一列放配饰；每件衣服放哪一格可以自己拖着调。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">自动出封面</text>
+      <text class="feat-desc">点「完成」时会自动生成一张方图当封面，穿搭列表就是照片墙。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">名称与场合</text>
+      <text class="feat-desc">每套可以起名字、标场合；不起名也不影响用，按内容自动显示「未命名搭配」。</text>
+    </view>
+  </view>
+
+  <!-- 日历 -->
+  <view class="card sec">
+    <view class="sec-title">日历</view>
+    <view class="feat">
+      <text class="feat-name">每天记一套</text>
+      <text class="feat-desc">点某一天，从已有的搭配里挑当天穿的那套记下来，一天只记一套。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">翻月看回顾</text>
+      <text class="feat-desc">日历格子里显示当天搭配的图，这个月穿了什么一眼能看出来。</text>
+    </view>
+  </view>
+
+  <!-- 数据与账号 -->
+  <view class="card sec">
+    <view class="sec-title">数据与账号</view>
+    <view class="feat">
+      <text class="feat-name">数据在云端</text>
+      <text class="feat-desc">登录之后，衣橱、搭配、日历都存在服务器上，换手机登录同一个账号就能看到。</text>
+    </view>
+    <view class="feat">
+      <text class="feat-name">照片后台上传</text>
+      <text class="feat-desc">保存时立刻生效，照片在后台慢慢传，传照片不耽误你继续用；下次打开会自动补传没传完的。</text>
+    </view>
+
+    <!-- 小圆点图例：给颜色不写字的标记，得有个地方说明白，否则看不懂 -->
+    <view class="feat">
+      <text class="feat-name">照片存在哪</text>
+      <text class="feat-desc">衣橱格子和穿搭卡片右下角有个小圆点，意思是这张照片存在哪：</text>
+      <view class="legend">
+        <view class="lg-row">
+          <view class="lg-dot lg-wait"></view>
+          <text class="lg-name">灰点</text>
+          <text class="lg-desc">照片还在手机里，正在后台上传，不影响用</text>
+        </view>
+        <view class="lg-row">
+          <view class="lg-dot lg-oss"></view>
+          <text class="lg-name">绿点</text>
+          <text class="lg-desc">照片已存到云存储，换手机也能看到</text>
+        </view>
+        <view class="lg-row">
+          <view class="lg-dot lg-local"></view>
+          <text class="lg-name">黄点</text>
+          <text class="lg-desc">照片存在服务器磁盘上（备用位置）</text>
+        </view>
+        <view class="lg-row">
+          <view class="lg-dot lg-none"></view>
+          <text class="lg-name">没有点</text>
+          <text class="lg-desc">这张没有照片，或者不用提醒</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="feat">
+      <text class="feat-name">微信登录</text>
+      <text class="feat-desc">微信授权登录，头像和昵称由你自己选、自己填，不会去读你的微信资料。</text>
+    </view>
+  </view>
+
+  <view class="tail">遇到问题、想要新功能，去「我的」页点「联系客服」直接找我。</view>
+
+</view>

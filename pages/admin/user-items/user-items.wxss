@@ -1,0 +1,162 @@
+/* TA 的衣物（管理端只读）
+ * 版式：2 列大图（图片优先、图要大），跟衣橱页同一套格子口径（配色/圆角/角标含义），
+ * 只是列数少一列、图更大 —— 管理员要看清照片本身
+ */
+
+/* ---- 顶部「看的是谁」 ---- */
+.head {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 28rpx;
+}
+
+.h-av {
+  flex: 0 0 auto;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: var(--fill);
+}
+
+.h-av-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+}
+
+.h-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.h-line1 {
+  display: flex;
+  align-items: center;
+}
+
+.h-name {
+  max-width: 320rpx;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.h-tag {
+  flex: 0 0 auto;
+  margin-left: 12rpx;
+  padding: 2rpx 14rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand-light);
+  color: var(--brand);
+  font-size: 20rpx;
+  line-height: 1.7;
+}
+
+.h-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--text-weak);
+}
+
+/* ---- 提示 / 空态 ---- */
+.tip {
+  margin-top: 16rpx;
+  padding: 28rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  text-align: center;
+}
+
+.tip-err {
+  color: var(--danger);
+}
+
+/* ---- 2 列图片墙 ---- */
+.wall2 {
+  margin-top: 20rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+/* 可用宽 702rpx（750 − 页面左右各 24），减 1 个 20rpx 间距后每格 341rpx */
+.w2-cell {
+  width: calc((100% - 20rpx) / 2);
+}
+
+.w2-pic {
+  position: relative;      /* 给右下角小圆点当定位基准 */
+}
+
+.w2-img {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 24rpx;
+  background: var(--fill);
+  display: block;
+}
+
+.w2-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.w2-cap {
+  margin-top: 10rpx;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.w2-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.w2-date {
+  flex: 0 0 auto;
+  font-size: 20rpx;
+  color: var(--text-weak);
+}
+
+/* 右下角小圆点：跟衣橱格子那颗同尺寸、同白圈，用户能对上号（含义在「关于」页有图例） */
+.pend {
+  position: absolute;
+  right: 14rpx;
+  bottom: 14rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.pend-oss {
+  background: var(--success);
+}
+
+.pend-local {
+  background: var(--warning);
+}
+
+/* ---- 页脚说明 ---- */
+.foot {
+  margin: 28rpx 0 40rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-weak);
+}

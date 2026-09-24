@@ -1,0 +1,244 @@
+/* 用户名单（仅管理员）
+ * 一屏要放三样东西（搜索 / 筛选排序 / 名单），所以都压扁一点，别让人翻半天才看到数据 */
+
+/* ---- 搜索 ---- */
+.sch {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 12rpx 12rpx 28rpx;
+}
+
+.sch-input {
+  flex: 1;
+  min-width: 0;
+  height: 72rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text);
+}
+
+.sch-ph {
+  color: var(--text-weak);
+}
+
+.sch-btn {
+  flex: 0 0 auto;
+  padding: 0 28rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand-light);
+  color: var(--brand);
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+}
+
+/* ---- 统计页带过来的筛选提示 ---- */
+.hint {
+  margin-top: 16rpx;
+  padding: 20rpx 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--brand-light);
+}
+
+.hint-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-tiny);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.hint-clear {
+  flex: 0 0 auto;
+  margin-left: 16rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+}
+
+/* ---- 筛选 / 排序：两排等宽小片 ---- */
+.bar {
+  margin-top: 16rpx;
+  display: flex;
+  padding: 12rpx;
+}
+
+.chip {
+  flex: 1;
+  min-width: 0;
+  height: 64rpx;
+  line-height: 64rpx;
+  text-align: center;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  white-space: nowrap;      /* 三个片固定不换行，宽度才不会有的宽有的窄 */
+}
+
+.chip-on {
+  background: var(--brand-light);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.arw {
+  margin-left: 6rpx;
+  font-size: 20rpx;
+}
+
+.count {
+  margin: 20rpx 8rpx 12rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* ---- 用户卡 ---- */
+.user {
+  margin-bottom: 16rpx;
+  padding: 28rpx;
+}
+
+.u-top {
+  display: flex;
+  align-items: center;
+}
+
+.u-av {
+  flex: 0 0 auto;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: var(--fill);
+}
+
+.u-av-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+}
+
+.u-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 22rpx;
+}
+
+.u-line1 {
+  display: flex;
+  align-items: center;
+}
+
+.u-name {
+  max-width: 320rpx;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.u-tag {
+  flex: 0 0 auto;
+  margin-left: 12rpx;
+  padding: 2rpx 14rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand-light);
+  color: var(--brand);
+  font-size: 20rpx;
+  line-height: 1.7;
+}
+
+.u-sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: var(--text-weak);
+}
+
+/* 数据量三格：等宽平分，别因为数字位数不一样就宽窄不齐 */
+.u-stats {
+  margin-top: 20rpx;
+  padding: 16rpx 0;
+  border-radius: 20rpx;
+  background: var(--fill);
+  display: flex;
+}
+
+.u-cell {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.u-num {
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.u-unit {
+  margin-left: 6rpx;
+  font-size: 22rpx;
+  color: var(--text-sub);
+}
+
+/* 可点的两格（衣物 / 搭配）：只加一个右缘小 ›，不换行、不改变三格等宽
+ * 不用背景块区分——三格里只有两格能点，加底色会显得三格不成套 */
+.u-cell-tap {
+  position: relative;
+}
+
+.u-cell-press {
+  opacity: 0.6;
+}
+
+.u-arw {
+  margin-left: 4rpx;
+  font-size: 24rpx;
+  line-height: 1;
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.u-meta {
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: var(--text-weak);
+  line-height: 1.6;
+}
+
+/* 衣架两个数（可用 / 总数）：单独一行，放在三格下面、活跃时间上面
+ * 不给底色/主题色 —— 一屏 20 张卡，加色会太吵；只把数字加重一点 */
+.u-hanger {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  color: var(--text-sub);
+}
+
+.u-hanger-t {
+  color: var(--text-sub);
+}
+
+.u-hanger-n {
+  margin-left: 10rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ---- 空 / 结尾 ---- */
+.empty {
+  padding: 60rpx;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+.end {
+  margin: 24rpx 0 40rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-weak);
+}

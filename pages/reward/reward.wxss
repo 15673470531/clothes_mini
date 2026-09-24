@@ -1,0 +1,178 @@
+/* 赚衣架页（2026-09）
+   观感跟衣架说明页一套（hero + sec），颜色/字号一律走 app.wxss 的变量，不引新色。 */
+
+/* ---- 当前衣架：可用 / 总数 ---- */
+
+.hero {
+  padding: 36rpx 32rpx 32rpx;
+  text-align: center;
+  background: var(--brand-light);   /* 唯一带底色的卡：一眼知道这是"头" */
+  box-shadow: none;                 /* 有底色不叠阴影，免得发脏 */
+  margin-bottom: 28rpx;             /* 卡片之间留出间距（2026-09 用户要的：原来三张卡是贴着的） */
+}
+
+.hero-nums {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.hn-val {
+  font-size: 48rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  color: var(--text);
+}
+
+/* 状态色：剩得少=黄、用完=红（阈值在 utils/hanger.js，跟「我的」页那张卡同源） */
+.hn-low { color: #C08A2E; }
+.hn-none { color: var(--danger); }
+
+.hn-label {
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+}
+
+/* ---- 能拿衣架的几项：每日签到 / 分享给好友 / 每月系统赠送 ---- */
+
+.sec {
+  padding: 8rpx 32rpx;
+  margin-bottom: 28rpx;             /* 同上：动作卡和流水卡之间也隔开 */
+}
+
+.rw {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 0;
+}
+
+/* 第二行起加分隔线（第一行贴着卡片顶部，不需要） */
+.rw-line {
+  border-top: 1rpx solid var(--line);
+}
+
+.rw-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.rw-name {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rw-desc {
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+}
+
+/* 右侧按钮：白底/主题色胶囊。两种状态只换配色和是否可点，尺寸恒定（布局别跳） */
+.rw-btn {
+  flex-shrink: 0;
+  margin: 0 0 0 20rpx;
+  padding: 0 28rpx;
+  min-width: 168rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  text-align: center;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  box-sizing: border-box;
+  /* 覆盖微信 button 的默认样式（默认有边框/内边距/背景） */
+  border: none;
+}
+
+.rw-btn::after {
+  border: none;
+}
+
+/* 能领：实心主题色 */
+.rw-btn-on {
+  background: var(--brand);
+  color: #ffffff;
+}
+
+/* 今天领过了：灰底灰字，能看见但明显不可点 */
+.rw-btn-off {
+  background: var(--fill);
+  color: var(--text-weak);
+}
+
+.rw-btn-active {
+  opacity: 0.85;
+}
+
+/* 右侧只有文字的状态（「新用户每月免费领取」领过之后显示「本月已领取」—— 那时不显示按钮） */
+.rw-state {
+  flex-shrink: 0;
+  margin-left: 20rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* ---- 衣架流水（页面最下面那个列表）----
+   2026-09 用户要的，样式也按他的口径收紧过一版：
+   一行一条（原来是"标题一行 + 日期一行"太松），日期紧跟标题弱化，**数字才是重点**（右对齐、主题色、加粗） */
+
+.lg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 30rpx 0 18rpx;
+}
+
+.lg-title {
+  font-size: var(--fs-strong);
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  color: var(--text);
+}
+
+.lg-total {
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+.lg-row {
+  display: flex;
+  align-items: center;
+  padding: 22rpx 0;
+  border-top: 1rpx solid var(--line);
+}
+
+.lg-name {
+  font-size: var(--fs-body);
+  color: var(--text);
+}
+
+/* 日期跟在标题后面（不占一行的宽度），弱化处理 */
+.lg-date {
+  margin-left: 16rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* 加了多少：右对齐、主题色、加粗 —— 一眼扫下来看的就是这一列 */
+.lg-amount {
+  margin-left: auto;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  color: var(--brand);
+}
+
+/* 条数超过上限时的说明 / 一条记录都没有时的话 */
+.lg-note,
+.lg-empty {
+  padding: 24rpx 0 12rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  text-align: center;
+}

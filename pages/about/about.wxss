@@ -1,0 +1,166 @@
+/* 关于应用：卡片/文字色只在 app.wxss 的变量上排，不引新色 */
+/* 2026-09 样式优化：给页面做出层次（封面 → 分块 → 分块内的条目 → 尾注），
+   之前全是一个样的卡片 + 一堆堆叠文字，扫读时分不清哪儿是哪儿。 */
+
+/* ---- 封面 ---- */
+
+.hero {
+  padding: 48rpx 32rpx 44rpx;
+  text-align: center;
+  background: var(--brand-light);   /* 唯一一块带底色的卡：让人一眼知道这是「头」 */
+  box-shadow: none;                 /* 有底色就不叠阴影了，免得发脏 */
+}
+
+.hero-name {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+.hero-tag {
+  margin-top: 12rpx;
+  font-size: var(--fs-sub);
+  color: var(--text-sub);
+}
+
+/* 版本号做成小药丸：它不该跟副标题抢注意力，但又得找得到 */
+.hero-ver {
+  display: inline-block;
+  margin-top: 24rpx;
+  padding: 4rpx 20rpx;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-sub);   /* 用 text-sub 而不是 text-weak：压在浅紫底上 text-weak 太淡，看着像没写完 */
+  font-size: var(--fs-tiny);
+  line-height: 1.7;
+}
+
+/* ---- 功能分块 ---- */
+
+.sec {
+  margin-top: 28rpx;   /* 块与块之间比块内条目松一点，分组才看得出来 */
+  padding: 32rpx;
+}
+
+/* 标题左侧一条品牌色短竖线：长页面里当锚点用，扫读时能快速定位到块首 */
+.sec-title {
+  position: relative;
+  padding-left: 20rpx;
+  font-size: var(--fs-strong);   /* 跟 app.wxss 的共用 .sec-title 对齐，别页与页不一致 */
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  line-height: 1.4;
+}
+
+.sec-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6rpx;
+  height: 32rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand);
+}
+
+/* 一条功能：名称一行、说明一行（不并排，窄屏不挤） */
+.feat {
+  margin-top: 26rpx;
+}
+
+/* 同块内条目之间补一条细线：一屏好几条说明，有线才数得清是几条 */
+.feat + .feat {
+  padding-top: 26rpx;
+  border-top: 1rpx solid var(--line);
+}
+
+.feat-name {
+  display: block;
+  font-size: var(--fs-sub);
+  font-weight: 600;
+}
+
+.feat-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  line-height: 1.7;
+}
+
+/* ---- 小圆点图例（衣橱/穿搭那颗点到底啥意思） ---- */
+
+.legend {
+  margin-top: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 20rpx;
+  background: var(--fill);   /* 浅底块把图例从正文里摘出来，跟正文区分 */
+}
+
+.lg-row {
+  display: flex;
+  align-items: flex-start;   /* 万一说明折行，圆点也要咬住第一行，别跑到两行中间去 */
+  line-height: 1.6;
+}
+
+.lg-row + .lg-row {
+  margin-top: 16rpx;
+}
+
+/* 四个点的尺寸/白圈/阴影跟衣橱里那颗保持一模一样，用户能对上号 */
+.lg-dot {
+  flex: 0 0 auto;
+  margin-top: 9rpx;   /* 首行行高 24×1.6=38.4rpx，点连边框 20rpx，补 9rpx 正好垂直居中 */
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.lg-wait  { background: rgba(0, 0, 0, 0.45); }
+.lg-oss   { background: var(--success); }
+.lg-local { background: var(--warning); }
+
+/* 「没有点」用一个空心圈表示：有形状但没颜色，比画个灰点更准确 */
+.lg-none {
+  background: transparent;
+  border: 2rpx dashed var(--line-strong);
+  box-shadow: none;
+}
+
+.lg-name {
+  flex: 0 0 auto;
+  margin: 0 12rpx 0 12rpx;
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.lg-desc {
+  flex: 1;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+}
+
+/* ---- 尾注 ---- */
+
+.tail {
+  margin: 32rpx 0 calc(40rpx + env(safe-area-inset-bottom));
+  padding: 24rpx 28rpx;
+  border-radius: 20rpx;
+  background: var(--fill);
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  line-height: 1.7;
+}
+
+/* 关于页顶部横幅插画（后端下发的图；拿不到就不显示，只剩文字） */
+.hero-pic {
+  display: block;
+  width: 100%;
+  border-radius: var(--r-card);
+  margin-bottom: 24rpx;
+}

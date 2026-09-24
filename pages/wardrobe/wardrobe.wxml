@@ -1,0 +1,62 @@
+<view class="page page-with-tab">
+
+  <!-- 概览：数字放在内容卡里；右侧一张横向小插画（2026-09 用户：只有个数字太单一了） -->
+  <view class="card overview">
+    <view class="ov-left">
+      <view class="ov-num">{{total}}</view>
+      <view class="ov-label">件衣物</view>
+    </view>
+    <!-- 插画做小一点：只当装饰，不占卡片高度 -->
+    <image wx:if="{{headerPic}}" class="ov-pic" src="{{headerPic}}" mode="widthFix" lazy-load binderror="onHeaderPicErr"></image>
+  </view>
+
+  <!-- 一级品类筛选 -->
+  <scroll-view class="cats" scroll-x>
+    <view
+      wx:for="{{cats}}"
+      wx:key="key"
+      class="tag cat {{catKey === item.key ? 'tag-on' : ''}}"
+      bindtap="onCat"
+      data-key="{{item.key}}">{{item.name}}</view>
+  </scroll-view>
+
+  <!-- 二级类目：选中具体品类后才出现，一行 flex:1 均分（含「全部」） -->
+  <view wx:if="{{subs.length}}" class="row5 subs">
+    <view
+      wx:for="{{subs}}"
+      wx:key="key"
+      class="cell cell-sm {{subKey === item.key ? 'on' : ''}}"
+      bindtap="onSub"
+      data-key="{{item.key}}">{{item.name}}</view>
+  </view>
+
+  <!-- 图片墙：3 列，有照片显示照片，没有用颜色块 + 品类图标 -->
+  <view wx:if="{{list.length}}" class="wall">
+    <view
+      wx:for="{{list}}"
+      wx:key="id"
+      class="wall-cell"
+      bindtap="onOpenItem"
+      bindlongpress="onLongPressItem"
+      data-id="{{item.id}}"
+      data-name="{{item.text}}">
+      <image wx:if="{{item.image}}" class="wall-pic" src="{{item.image}}" mode="aspectFill"></image>
+      <view wx:else class="wall-pic wall-ph {{item.light ? 'thumb-light' : ''}}" style="background:{{item.color}}">
+        <text class="thumb-emoji">{{item.emoji}}</text>
+      </view>
+      <!-- 右下角小圆点：照片存哪了（灰=待上传 / 绿=OSS / 黄=服务器本地盘），只给颜色不写字 -->
+      <view wx:if="{{item.badgeKind}}" class="pend pend-{{item.badgeKind}}"></view>
+      <view class="wall-text">{{item.text}}</view>
+    </view>
+  </view>
+
+  <view wx:else class="empty">
+    <image wx:if="{{emptyReal && emptyPic}}" class="empty-img empty-pic-wd"
+      src="{{emptyPic}}" mode="widthFix" lazy-load binderror="onEmptyPicErr"></image>
+    <text wx:if="{{emptyReal && emptySlogan}}" class="empty-slogan">{{emptySlogan}}</text>
+    <text class="empty-text">{{emptyText}}</text>
+  </view>
+
+  <view class="gap"></view>
+  <view class="fab" bindtap="onAdd">＋</view>
+</view>

@@ -1,0 +1,85 @@
+<view class="page">
+
+  <!-- 搜索：昵称 / 名字 / openid / ID（ID 同时支持显示用的 10xxxx 写法） -->
+  <view class="card sch">
+    <input class="sch-input" placeholder="搜昵称 / 名字 / openid / ID"
+      value="{{keywordInput}}" bindinput="onKeywordInput" bindconfirm="doSearch"
+      confirm-type="search" placeholder-class="sch-ph" />
+    <text class="sch-btn" bindtap="doSearch">搜索</text>
+  </view>
+
+  <!-- 统计页带过来的筛选（新增用户 / 活跃用户），可一键清掉 -->
+  <view class="card hint" wx:if="{{hint}}">
+    <text class="hint-text">筛选：{{hint}}</text>
+    <text class="hint-clear" bindtap="clearHint">✕ 清除</text>
+  </view>
+
+  <!-- 身份筛选 -->
+  <view class="card bar">
+    <view class="chip {{adminFilter === '' ? 'chip-on' : ''}}" data-v="" bindtap="setAdminFilter">全部</view>
+    <view class="chip {{adminFilter === '1' ? 'chip-on' : ''}}" data-v="1" bindtap="setAdminFilter">管理员</view>
+    <view class="chip {{adminFilter === '0' ? 'chip-on' : ''}}" data-v="0" bindtap="setAdminFilter">普通用户</view>
+  </view>
+
+  <!-- 排序 -->
+  <view class="card bar">
+    <view class="chip {{sortBy === 'last_active_at' ? 'chip-on' : ''}}" data-v="last_active_at" bindtap="setSort">
+      最近活跃<text class="arw" wx:if="{{sortBy === 'last_active_at'}}">{{sortOrder === 'desc' ? '↓' : '↑'}}</text>
+    </view>
+    <view class="chip {{sortBy === 'created_at' ? 'chip-on' : ''}}" data-v="created_at" bindtap="setSort">
+      注册时间<text class="arw" wx:if="{{sortBy === 'created_at'}}">{{sortOrder === 'desc' ? '↓' : '↑'}}</text>
+    </view>
+    <view class="chip {{sortBy === 'last_login_at' ? 'chip-on' : ''}}" data-v="last_login_at" bindtap="setSort">
+      最后登录<text class="arw" wx:if="{{sortBy === 'last_login_at'}}">{{sortOrder === 'desc' ? '↓' : '↑'}}</text>
+    </view>
+  </view>
+
+  <view class="count">共 {{total}} 人<text wx:if="{{loading}}"> · 加载中…</text></view>
+
+  <!-- 用户列表 -->
+  <view class="card user" wx:for="{{list}}" wx:key="id">
+    <view class="u-top">
+      <image class="u-av" wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+      <view class="u-av u-av-ph" wx:else>👤</view>
+
+      <view class="u-main">
+        <view class="u-line1">
+          <!-- 名字优先、昵称兜底；都没有就留空（不写「微信用户」这类占位） -->
+          <text class="u-name" wx:if="{{item.name || item.nickname}}">{{item.name || item.nickname}}</text>
+          <text class="u-tag" wx:if="{{item.isAdmin}}">管理员</text>
+        </view>
+        <text class="u-sub">#{{item.id}} · 注册 {{item.createdAt}}</text>
+      </view>
+    </view>
+
+    <!-- 这个人的数据量：一眼看出谁在用、谁是注册完就没动的空号
+         前两格能点（右缘一个小 ›，主题色呼应）：点进 TA 的衣物 / 搭配明细；
+         第三格「天打卡」没有明细可看，就不做可点暗示，免得点了个寂寞 -->
+    <view class="u-stats">
+      <view class="u-cell u-cell-tap" hover-class="u-cell-press"
+        bindtap="openItems" data-id="{{item.id}}">
+        <text class="u-num">{{item.itemCount}}</text><text class="u-unit">件衣物</text><text class="u-arw">›</text>
+      </view>
+      <view class="u-cell u-cell-tap" hover-class="u-cell-press"
+        bindtap="openOutfits" data-id="{{item.id}}">
+        <text class="u-num">{{item.outfitCount}}</text><text class="u-unit">套搭配</text><text class="u-arw">›</text>
+      </view>
+      <view class="u-cell"><text class="u-num">{{item.wearCount}}</text><text class="u-unit">天打卡</text></view>
+    </view>
+
+    <!-- 衣架：可用 / 总数（跟「我的」页那张衣架卡一个口径；总数 = 余额 + 已占用）
+         单独一行放着，不动上面三格的等宽布局 -->
+    <view class="u-hanger">
+      <text class="u-hanger-t">衣架</text>
+      <text class="u-hanger-n">{{item.hangerTotal}} / {{item.hangerTotalLimit}}</text>
+    </view>
+
+    <view class="u-meta">最近活跃 {{item.lastActiveAt || '未记录'}} · 最后登录 {{item.lastLoginAt || '未记录'}}</view>
+  </view>
+
+  <!-- 空 / 没有更多 -->
+  <view class="card empty" wx:if="{{!loading && list.length === 0}}">没有符合条件的用户</view>
+  <view class="end" wx:if="{{list.length > 0 && page >= lastPage}}">— 没有更多了 —</view>
+  <view class="end" wx:if="{{list.length > 0 && page < lastPage}}">上滑加载更多（共 {{total}} 人）</view>
+
+</view>

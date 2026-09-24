@@ -1,0 +1,436 @@
+/* 记录衣物页：只留本页布局（卡片/等宽格/底部栏走 app.wxss） */
+
+/* 卡与卡之间留白
+ * .page 只给了左右/上内边距，这里三张卡连着排、间距为 0，两张卡紧贴，
+ * 再叠上上方卡 28rpx 的阴影，看着就像卡摞在一起。间距与 mine 页保持一致。
+ */
+.card {
+  margin-bottom: 24rpx;
+}
+
+/* ---- 照片行：左缩略图 + 右侧说明与操作 ---- */
+
+.photo-row {
+  display: flex;
+  gap: 24rpx;
+  align-items: flex-start;
+}
+
+.photo-wrap {
+  width: 240rpx;
+  height: 240rpx;
+  flex-shrink: 0;
+}
+
+.photo-img {
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 20rpx;
+  background: var(--bg);
+}
+
+.photo-side {
+  flex: 1;
+  min-width: 0;
+  padding-top: 8rpx;
+}
+
+.photo-hint {
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  line-height: 1.5;
+  margin-bottom: 20rpx;
+}
+
+.photo-btns {
+  display: flex;
+  gap: 16rpx;
+}
+
+.mini-btn {
+  height: 64rpx;
+  padding: 0 28rpx;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--text-sub);
+  font-size: var(--fs-tiny);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-btn-brand {
+  background: var(--brand-light);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* ---- 还没有照片：两个来源按钮 ---- */
+
+.photo-src {
+  display: flex;
+  gap: 20rpx;
+}
+
+.photo-src-btn {
+  flex: 1;
+  height: 200rpx;
+  border-radius: 20rpx;
+  background: var(--card);
+  border: 2rpx dashed var(--line-strong);
+  color: var(--text-sub);
+  font-size: var(--fs-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-src-btn:active {
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* ---- 二级类目（细分）：跟上面的品类格拉开一段 ---- */
+
+.label-gap {
+  margin-top: 28rpx;
+}
+
+/* ---- 名称行（iOS 风格：左标签 + 右输入）----
+ * 2026-09 已上提到 app.wxss（搭配预览页也要用同一套），本页不再重复定义 */
+
+/* ---- 洗白底（归一化 · 2026-09）：底部一行入口 + 对比弹层 ---- */
+
+.wash-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin: 8rpx 0 20rpx;
+  padding: 26rpx 32rpx;
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+/* 洗过之后左侧挂一张白底缩略图：一眼知道结果长什么样 */
+.wash-thumb {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 12rpx;
+  background: var(--bg);
+  flex: 0 0 auto;
+}
+
+.wash-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.wash-title {
+  font-size: var(--fs-strong);
+  color: var(--text);
+}
+
+.wash-sub {
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+}
+
+.wash-left {
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  flex: 0 0 auto;
+}
+
+.cmp-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(34, 30, 42, 0.55);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.cmp-box {
+  width: 100%;
+  background: var(--card);
+  border-radius: 20rpx;
+  padding: 32rpx 28rpx 28rpx;
+}
+
+.cmp-title {
+  font-size: var(--fs-strong);
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.cmp-row {
+  display: flex;
+  gap: 20rpx;
+}
+
+.cmp-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+/* 两张图都用 aspectFit 摆在同一高度里，方便正面比 */
+.cmp-img {
+  width: 100%;
+  height: 460rpx;
+  background: var(--bg);
+  border-radius: 12rpx;
+}
+
+.cmp-cap {
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  text-align: center;
+}
+
+.cmp-cap-on {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.cmp-hint {
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  text-align: center;
+  margin: 22rpx 0 6rpx;
+  line-height: 1.6;
+}
+
+.cmp-btns {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 22rpx;
+}
+
+.cmp-btn {
+  flex: 1;
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  font-size: var(--fs-sub);
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* 当前封面用的就是这张 → 实心主题色（另一个是描边感的白底） */
+.cmp-btn-main {
+  background: var(--brand);
+  color: #fff;
+}
+
+.cmp-btn-on {
+  font-weight: 600;
+}
+
+/* ---- 删除这件衣物 ----
+ * 单独一行居中红字，放在底部保存栏上方（跟保存栏留出一段距离，别让人误点）
+ */
+
+.del-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  margin: 8rpx 0 24rpx;
+}
+
+.del-txt {
+  font-size: var(--fs-sub);
+  color: var(--danger);
+}
+
+/* ---- 颜色：6 列等宽，12 个正好两行 ---- */
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.color {
+  width: calc((100% - 80rpx) / 6);
+  padding: 8rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dot {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+}
+
+.dot-light {
+  border: 2rpx solid var(--line-strong);
+}
+
+/* 选中：外圈描边（彩色圆点上打勾不好看） */
+.dot-on {
+  box-shadow: 0 0 0 6rpx var(--brand-light), 0 0 0 8rpx var(--brand);
+}
+
+.color-name {
+  margin-top: 8rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* ---- 更多属性：折叠行 ---- */
+
+.more-head {
+  display: flex;
+  align-items: center;
+}
+
+.more-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.more-title {
+  font-size: var(--fs-body);
+}
+
+.more-sub {
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+.more-head .chevron {
+  margin-left: 16rpx;
+}
+
+/* 展开时箭头朝下（基线 .chevron 默认朝右 = rotate(-45deg)） */
+.chevron-open {
+  transform: rotate(45deg);
+}
+
+
+/* ===== 批量录入：一次从相册选多张（2026-09）===== */
+
+/* 顶部进度：「第 2 / 5 件」+ 一句提示（只有一批多于一张时才出现） */
+.q-head {
+  margin: 4rpx 4rpx 20rpx;
+  text-align: center;
+}
+
+.q-progress {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--brand);
+}
+
+/* 一次选多张：并排缩略图条（横向滑动），点哪张填哪张 */
+.ph-strip {
+  white-space: nowrap;
+  margin-bottom: 24rpx;
+}
+
+.ph-thumb {
+  position: relative;
+  display: inline-block;
+  width: 140rpx;
+  height: 140rpx;
+  margin-right: 16rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  /* 边框一直占着位置：选中时只换颜色，格子尺寸不跳（布局确定性） */
+  border: 4rpx solid transparent;
+}
+
+.ph-thumb-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ph-on {
+  border-color: var(--brand);
+}
+
+/* 已录：压暗 + 中间一个对勾；点了会提示「这件已经录好了」 */
+.ph-done .ph-thumb-img {
+  opacity: 0.35;
+}
+
+.ph-tick {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52rpx;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+/* 「剩下 N 张都用这套属性」：跟其它卡同宽，一整行可点 */
+.batch-row {
+  display: flex;
+  align-items: center;
+  margin-top: 24rpx;
+  padding: 26rpx 32rpx;
+}
+
+.batch-box {
+  width: 40rpx;
+  height: 40rpx;
+  flex-shrink: 0;
+  margin-right: 22rpx;
+  border-radius: 10rpx;
+  border: 3rpx solid var(--line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.batch-box-on {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.batch-tick {
+  font-size: 26rpx;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.batch-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.batch-title {
+  font-size: var(--fs-sub);
+  font-weight: 600;
+}
+
+.batch-sub {
+  margin-top: 6rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+}

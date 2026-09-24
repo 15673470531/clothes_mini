@@ -1,0 +1,396 @@
+/* 穿搭日历页：只写本页的东西（.page/.card/.pad/.wall系列/.empty/.chevron 都在 app.wxss 共用件里）
+ * 颜色一律走 var()，不写字面量（scripts/check_hardcoded_colors.py 会扫）。
+ * A 方案：月历格子只放「日期 + 状态点」（7 列里塞图看不清），大图在下面的「本月穿搭」列表里看。 */
+
+/* ---- 月份 + 切月 ---- */
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+}
+
+.cal-month {
+  font-size: var(--fs-strong);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cal-navs {
+  display: flex;
+  gap: 12rpx;
+}
+
+.cal-nav {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: var(--brand-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-nav-on {
+  opacity: 0.7;
+}
+
+/* 箭头用边框画（不依赖字体里的符号，符号在部分机型上是方块） */
+.cal-arrow {
+  width: 16rpx;
+  height: 16rpx;
+  border-right: 3rpx solid var(--brand);
+  border-bottom: 3rpx solid var(--brand);
+  transform: rotate(-45deg);
+  margin-left: -4rpx;
+}
+
+.cal-arrow-l {
+  transform: rotate(135deg);
+  margin-left: 4rpx;
+}
+
+/* ---- 星期表头 ---- */
+.cal-week {
+  display: flex;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.cal-wk {
+  flex: 1;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* ---- 月历格子：7 列（格宽 (702-6×8)/7 ≈ 93rpx）
+ * 每格 = 日期行 34rpx + 那天的穿搭图 93rpx = 127rpx；行高写死，空白格也占满，网格才不会错位
+ * 图是方形（封面本来就是 750×750 方图）+ aspectFill → 不裁内容 */
+.cal-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.cal-cell {
+  position: relative;
+  width: calc((100% - 48rpx) / 7);
+  height: 127rpx;
+}
+
+.cal-blank {
+  background: transparent;
+}
+
+.cal-num {
+  height: 34rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-num-t {
+  min-width: 34rpx;
+  height: 34rpx;
+  padding: 0 6rpx;
+  border-radius: 17rpx;
+  font-size: 22rpx;
+  line-height: 34rpx;
+  text-align: center;
+  color: var(--text-sub);
+}
+
+/* 今天：日期浅紫底；选中：日期实心主题色 */
+.cal-today .cal-num-t {
+  background: var(--brand-light);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.cal-sel .cal-num-t {
+  background: var(--brand);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 那天的穿搭图（日期下面）：方形、跟格宽同宽 */
+.cal-pic {
+  width: 100%;
+  height: 93rpx;
+  border-radius: 12rpx;
+  background: var(--fill);
+}
+
+/* 没记录的那天：很淡的空槽（网格节奏一致，也知道这里能点） */
+.cal-free {
+  background: var(--fill);
+  opacity: 0.55;
+}
+
+/* ---- 提示 ---- */
+.cal-lead {
+  margin: 16rpx 4rpx 0;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* ---- 选中那天的穿搭卡：大图 250rpx（≈ 月历格子的 2.7 倍）+ 名称 + 标题行按钮 ----
+ * 图原来 300rpx，加标题行后整卡还差 40rpx 装不进一屏（底部会被自研 tabBar 压住），
+ * 收到 250rpx → 整卡落在 tabBar 之上，一屏看完不用滚。 */
+.cal-day {
+  margin-top: 16rpx;
+  padding: 24rpx;
+}
+
+.cal-daydate {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sub);
+  color: var(--text-sub);
+}
+
+.cal-dayrow {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-top: 16rpx;
+}
+
+.cal-daypic {
+  width: 250rpx;
+  height: 250rpx;
+  border-radius: 24rpx;
+  background: var(--fill);
+  flex-shrink: 0;
+}
+
+.cal-dayinfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-dayname {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cal-daydesc {
+  margin-top: 10rpx;
+  font-size: var(--fs-tiny);
+}
+
+/* 这天没记：一行提示顶在卡片里 */
+.cal-daynone {
+  margin: 24rpx 0 4rpx;
+  font-size: var(--fs-sub);
+  color: var(--text-weak);
+  display: block;
+}
+
+/* 记过但搭配已删：占位块（虚线 + 「已删」） */
+.cal-gone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fill);
+  border: 2rpx dashed var(--line-strong);
+}
+
+.cal-gone-t {
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* ---- 卡片标题行：日期在左、操作按钮在右（同一行，省掉原来独立的一行按钮） ---- */
+.cal-dayhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.cal-dayacts {
+  display: flex;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+/* 标题行里的小按钮（选一套/换一套/清除）：胶囊、比正文按钮矮一档 */
+.cal-mini {
+  height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: var(--r-pill);
+  border: 2rpx solid var(--line);
+  color: var(--text-sub);
+  font-size: var(--fs-tiny);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-mini-on {
+  background: var(--fill);
+}
+
+/* 主按钮（选一套 / 换一套）：浅紫底 + 主题色字 */
+.cal-mini-main {
+  background: var(--brand-light);
+  border-color: var(--brand-light);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* 主按钮按下态：浅紫底加深一点
+ * 坑：共用件里只有 `.btn-primary.pressed`，`.pressed` 单独写不生效，
+ *     所以这里必须给 cal-mini 单独准备按下态类（放 main 之后才压得住同权重）。 */
+.cal-mini-pressed {
+  background: #E4DEF2;
+  border-color: #E4DEF2;
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* ---- 底部按钮（弹层里用） ---- */
+.cal-btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: var(--r-pill);
+  border: 2rpx solid var(--line);
+  color: var(--text-sub);
+  font-size: var(--fs-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-btn-on {
+  background: var(--fill);
+}
+
+/* ---- 选搭配：半屏弹层 ---- */
+
+/* ⚠️ 弹层必须坐在自研 tabBar 上面（bottom 让出 tabBar 高度）：
+ * 自定义 tabBar 是独立组件，它的层会盖在页面 fixed 元素之上 —— 直接 bottom:0 的话
+ * 弹层底部（「清除这天的记录」那一行）会被 tabBar 挡掉，实测就是这样。
+ * 所以 bottom = tabBar 高度（124rpx + 安全区），弹层自己的 padding 不再重复算安全区。 */
+
+/* 关闭时 visibility:hidden —— 既看不见也不响应点击（比 pointer-events 稳），还能过渡 */
+.sh-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 200;
+  visibility: hidden;
+}
+
+.sh-wrap-on {
+  visibility: visible;
+}
+
+.sh-scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(20, 23, 29, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.sh-wrap-on .sh-scrim {
+  opacity: 1;
+}
+
+.sh {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(124rpx + env(safe-area-inset-bottom));
+  max-height: 74vh;
+  padding: 24rpx;
+  background: var(--card);
+  border-radius: 32rpx 32rpx 0 0;
+  transform: translateY(100%);
+  transition: transform 0.22s;
+  display: flex;
+  flex-direction: column;
+}
+
+.sh-wrap-on .sh {
+  transform: translateY(0);
+}
+
+.sh-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.sh-title {
+  font-size: var(--fs-strong);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sh-close {
+  font-size: var(--fs-sub);
+}
+
+.sh-body {
+  flex: 1;
+  max-height: 46vh;
+}
+
+.sh-cell {
+  position: relative;
+}
+
+.sh-picwrap {
+  position: relative;
+}
+
+/* 已选那套：右上角主题色勾（用两条线画，不依赖字体符号） */
+.sh-tick {
+  position: absolute;
+  right: 6rpx;
+  top: 6rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.sh-tick::after {
+  content: '';
+  position: absolute;
+  left: 12rpx;
+  top: 10rpx;
+  width: 16rpx;
+  height: 9rpx;
+  border-left: 3rpx solid #ffffff;
+  border-bottom: 3rpx solid #ffffff;
+  transform: rotate(-45deg);
+}
+
+.sh-pad {
+  height: 16rpx;
+}
+
+.sh-foot {
+  padding-top: 16rpx;
+}
+
+.sh-clear {
+  flex: none;
+  width: 100%;
+}
+
+/* 「选一套」弹层空态：插画 + 一句话（弹层里空间小，上下留白收一点） */
+.empty-in-sheet { padding: 40rpx 40rpx 50rpx; }
+.empty-pic-cal { width: 460rpx; }

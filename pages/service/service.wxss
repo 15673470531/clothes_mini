@@ -1,0 +1,81 @@
+/* 联系客服：一张卡 = 标题 + 两行居中说明 + 邮箱条 + 主按钮
+ *
+ * 字号：标题原先是混在说明里的头几个字（「遇到任何问题或建议」），拎出来当标题后，
+ * 说明最长的一行只剩 24 个字 → 24rpx 需要 576rpx，卡片内文宽 638rpx，放得下还有余量，
+ * 所以说明回到了项目里的 --fs-tiny（比之前为了不折行压到的 21rpx 好读）。
+ */
+
+.svc-page {
+  padding-top: 32rpx;
+}
+
+.svc {
+  padding: 36rpx 32rpx;
+}
+
+/* 标题（居中）：说明里的第一句开头那几个字挪上来当标题，字号大一点、颜色用正文色 */
+.svc-title {
+  font-size: var(--fs-strong);
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.svc-desc {
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+  line-height: 1.8;
+  text-align: center;
+}
+
+.svc-title + .svc-desc {
+  margin-top: 16rpx;
+}
+
+.svc-desc + .svc-desc {
+  margin-top: 8rpx;
+}
+
+/* 邮箱条：浅底色块，内容居中（跟上下文字的居中感一致）；点一下或长按都能复制 */
+.mail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 28rpx;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: var(--fill);
+}
+
+.mail-active {
+  opacity: 0.75;
+}
+
+.mail-text {
+  font-size: var(--fs-sub);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mail-copy {
+  flex-shrink: 0;
+  margin-left: 20rpx;
+  font-size: var(--fs-tiny);
+  color: var(--brand);
+}
+
+/* 主按钮：全页唯一的重色块，跟上面的内容留足距离、带阴影 */
+.svc-btn {
+  margin: 44rpx 0 0;
+  padding: 0;
+  border: none;
+  background: var(--brand-grad);
+  color: #ffffff;
+  box-shadow: 0 12rpx 28rpx rgba(93, 76, 124, 0.28);
+}
+
+/* 原生 button 的 ::after 是一圈默认描边 */
+.svc-btn::after {
+  border: none;
+}

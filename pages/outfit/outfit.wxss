@@ -1,0 +1,81 @@
+/* 穿搭页：只留本页布局（场合筛选行 .cats/.cat、图片墙 .wall 系列都在 app.wxss 共用件里） */
+
+/* 穿搭列表：**2 个一行**（用户 2026-09：3 个一行图太小，看不清）
+ * 共用件 .wall 是 3 列给衣橱用的，这里只覆盖本页的，不动衣橱。
+ * 封面是 750×750 方图 → 格子里也是正方形，aspectFill 不裁内容（用户的底线）。 */
+
+/* 和顶部那排场合选项之间留点间距（用户 2026-09：贴着太挤） */
+.oc-wall {
+  margin-top: 20rpx;
+}
+
+/* 每套搭配一张白底卡：图 + 名字都包在卡里（跟日历页/我的页的卡片风格统一）
+ * 宽度算法（改页面 padding 时要跟着改）：可用宽 702rpx、两列间距 16rpx
+ *   → 每张卡 (702-16)/2 = 343rpx；卡内左右留白 12rpx → 图宽 343-24 = 319rpx，高度取同值保持方形 */
+.oc-cell {
+  width: calc((100% - 16rpx) / 2);
+  padding: 12rpx 12rpx 16rpx;
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+.oc-cell .wall-pic {
+  height: 319rpx;
+}
+
+/* 名字在卡里，跟图留一点距离 */
+.oc-cell .wall-text {
+  margin-top: 12rpx;
+  font-size: var(--fs-sub);
+}
+
+/* 缩略图外面包一层，用来放角标 */
+.oc-pic {
+  position: relative;
+}
+
+/* 角标：件数 / 缺N */
+.oc-badge {
+  position: absolute;
+  right: 8rpx;
+  top: 8rpx;
+  min-width: 40rpx;
+  height: 40rpx;
+  padding: 0 12rpx;
+  border-radius: var(--r-pill);
+  background: rgba(20, 23, 29, 0.62);
+  color: #ffffff;
+  font-size: 22rpx;
+  line-height: 40rpx;
+  text-align: center;
+}
+
+/* 有衣物被删除：警示色 */
+.oc-badge-warn {
+  background: var(--warning);
+}
+
+/* 右下角小圆点：封面存哪了（只给颜色，不写字，口径同衣橱）
+ * 右上角是件数角标，一个右上、一个右下，互不遮挡 */
+.oc-store {
+  position: absolute;
+  right: 12rpx;
+  bottom: 12rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.25);
+}
+
+.oc-store-oss {
+  background: var(--success);
+}
+
+.oc-store-local {
+  background: var(--warning);
+}
+
+/* 空态插画（后端下发的透明底图） */
+.empty-pic-ot { width: 420rpx; }

@@ -1,0 +1,96 @@
+/* AI 试穿页（2026-09 · P3）
+   配色/圆角/字号全部走全局变量（app.wxss），不新造样式口径 */
+
+/* 生成中遮罩：盖住整屏（原生导航栏盖不住，但页面内容区全遮住，点了也没反应）
+   浅暖底 + 白卡，跟页面底色 #FBF8F4 一套，不用纯黑遮罩（那跟本项目的克制调性不搭） */
+.mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(251, 248, 244, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.mask-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56rpx 64rpx;
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+/* 转圈：纯 CSS（不引图片，也不上 canvas） */
+.spin {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 6rpx solid var(--line);
+  border-top-color: #5d4c7c;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.mask-t1 {
+  margin-top: 28rpx;
+  font-size: var(--fs-sub);
+  color: var(--text);
+}
+
+.mask-t2 {
+  margin-top: 10rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* 结果图：大图优先（列表/详情一贯口径），宽度撑满白卡，高度按比例 */
+.shot-card {
+  margin-top: 24rpx;
+}
+
+.shot {
+  width: 100%;
+  border-radius: 16rpx;
+  background: var(--line);
+}
+
+.shot-hint {
+  margin: 20rpx 24rpx 0;
+  font-size: var(--fs-tiny);
+  color: var(--text-sub);
+}
+
+.shot-tip {
+  margin: 8rpx 24rpx 0;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+}
+
+/* 失败态 */
+.fail-card {
+  margin-top: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fail-t {
+  font-size: var(--fs-sub);
+  color: var(--text-sub);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.fail-btn {
+  margin-top: 32rpx;
+  padding: 0 64rpx;
+}

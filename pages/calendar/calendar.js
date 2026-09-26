@@ -4,13 +4,10 @@
  * 数据（utils/store.js 的 wear* 系列）：`clothes_wear = { 'YYYY-MM-DD': 搭配 id }`，**一天只记一套**。
  * 只存 id、不存快照 → 搭配改名/换封面日历跟着变；搭配被删了那天标成灰色点 + 列表里显示「已删除的搭配」。
  *
- * 页面分工（2026-09 用户定的最终版）：
- *  - 月历只放**日期 + 状态点**（7 列格子只有 93rpx，塞图也看不清，索性不塞）
- *  - **点哪天，下面就显示哪天的穿搭**（大图卡：300rpx 方图 + 名称 + 件数·场合 + 换一套/清除）
- *  - 卡片上的「选一套／换一套」→ 弹半屏弹层挑（一天一套）；「清除」清掉那天的记录
- *  - 未来日期也能记（提前安排）
+ * 紧凑月历展示记录缩略图，选中日期下方展示完整穿搭；支持预览与提前安排。
  */
 
+const api = require('../../utils/api.js')
 const store = require('../../utils/store.js')
 const mock = require('../../utils/mock.js')
 const cloud = require('../../utils/cloud.js')
@@ -28,6 +25,11 @@ function fmt(y, m, d) {
 
 Page({
   data: {
+    loggedIn: false,
+    syncing: false,
+    syncError: false,
+    hasRecord: false,
+    emptyTitle: '',
     week: WEEK,
     year: 2026,
     month: 9,
@@ -41,7 +43,7 @@ Page({
     selGone: false,
     sheet: false,
     pickList: [],
-    emptyPic: ''        // 「选一套」弹层空态插画（后端下发；拿不到就只显示文字）
+    emptyPic: assets.fallback('empty.calendar')        // 「选一套」弹层空态插画（后端下发；拿不到就只显示文字）
   },
 
   onLoad() {
@@ -59,8 +61,58 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setSelected(2)
     }
+    const now = new Date()
+    this.setData({ today: fmt(now.getFullYear(), now.getMonth() + 1, now.getDate()) })
     this.refresh()
-    cloud.ready().then((r) => { if (r && r.changed) this.refresh() })
+    this.syncPage()
+  },
+
+  checkLogin() {
+    const loggedIn = api.isLoggedIn()
+    if (!loggedIn) {
+      this._cards = []; this._byId = {}
+      this.setData({ loggedIn: false, sheet: false, cells: this.data.cells.map(c => Object.assign({}, c, { photo: '', wear: false, gone: false })), pickList: [], selName: '', selPhoto: '', selDesc: '', selGone: false, hasRecord: false, syncing: false, syncError: false })
+      return false
+    }
+    this.setData({ loggedIn: true })
+    return true
+  },
+
+  onHide() { this.checkLogin() },
+  onGoLogin() { wx.switchTab({ url: '/pages/mine/mine' }) },
+  onGoOutfits() {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    this.setData({ sheet: false })
+    wx.switchTab({ url: '/pages/outfit/outfit' })
+  },
+
+  syncPage() {
+    if (!this.checkLogin() || this._syncing) return
+    this._syncing = true
+    this.setData({ syncing: true, syncError: false })
+    return cloud.ready().then(r => {
+      if (!this.checkLogin()) return
+      this.refresh()
+      this.setData({ syncError: !!(r && r.error) })
+    }).catch(() => {
+      if (this.checkLogin()) this.setData({ syncError: true })
+    }).finally(() => { this._syncing = false; this.setData({ syncing: false }) })
+  },
+
+  onPreview() {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    if (!this.data.selPhoto) return
+    wx.previewImage({ current: this.data.selPhoto, urls: [this.data.selPhoto],
+      fail: () => wx.showToast({ title: '图片暂时无法预览', icon: 'none' }) })
+  },
+
+  onMoreDay() {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    if (!this.data.hasRecord) return
+    const date = this.data.selDate
+    wx.showActionSheet({ itemList: ['清除这天的记录'], success: r => {
+      if (r.tapIndex === 0 && date === this.data.selDate) this.onClearDay()
+    } })
   },
 
   /** 远端插画加载失败（域名没白名单/格式不认/断网）→ 换包内本地图，别留个空位 */
@@ -71,7 +123,8 @@ Page({
 
   /** 读搭配 + 日历记录 → 组装月历格子和本月列表 */
   refresh() {
-    const cards = store.outfitCards()
+    const loggedIn = this.checkLogin()
+    const cards = loggedIn ? store.outfitCards() : []
     this._byId = {}
     cards.forEach(c => {
       const first = (c.items || [])[0] || null
@@ -87,7 +140,7 @@ Page({
     })
     this._cards = cards
 
-    const wear = store.wearMap()
+    const wear = loggedIn ? store.wearMap() : {}
     const { year, month } = this.data
     const days = new Date(year, month, 0).getDate()
     // 周一打头：把 JS 的 0(周日) 换算成 0(周一)
@@ -119,7 +172,7 @@ Page({
   /** 当天卡片（选中那天穿了什么）+ 弹层候选列表（当前那套带勾） */
   applySel() {
     const date = this.data.selDate
-    const oid = store.wearOf(date)
+    const oid = api.isLoggedIn() ? store.wearOf(date) : ''
     const card = oid ? this._byId[oid] : null
 
     const pickList = (this._cards || []).map(c => {
@@ -136,6 +189,8 @@ Page({
     })
 
     this.setData({
+      hasRecord: !!oid,
+      emptyTitle: date === this.data.today ? '今天穿什么？' : (date > this.data.today ? '提前安排这天的穿搭' : '记下这天的穿搭'),
       selText: this.dateText(date),
       selName: oid ? (card ? card.name : '已删除的搭配') : '',
       selDesc: card ? card.desc : '',
@@ -160,14 +215,26 @@ Page({
     let { year, month } = this.data
     month--
     if (month < 1) { month = 12; year-- }
-    this.setData({ year, month }, () => this.refresh())
+    this.selectMonth(year, month)
   },
 
   onNextMonth() {
     let { year, month } = this.data
     month++
     if (month > 12) { month = 1; year++ }
-    this.setData({ year, month }, () => this.refresh())
+    this.selectMonth(year, month)
+  },
+
+  selectMonth(year, month) {
+    const selectedDay = Number(this.data.selDate.split('-')[2]) || 1
+    const day = Math.min(selectedDay, new Date(year, month, 0).getDate())
+    this.setData({ year, month, selDate: fmt(year, month, day) }, () => this.refresh())
+  },
+
+  onToday() {
+    const now = new Date()
+    const today = fmt(now.getFullYear(), now.getMonth() + 1, now.getDate())
+    this.setData({ today, year: now.getFullYear(), month: now.getMonth() + 1, selDate: today }, () => this.refresh())
   },
 
   /** 点某天 → 选中它，下面就是那天的穿搭（不弹层，要改再点卡片上的按钮） */
@@ -178,6 +245,8 @@ Page({
   },
 
   onOpenSheet() {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    if (!this.data.pickList.length) { this.onGoOutfits(); return }
     this.setData({ sheet: true })
   },
 
@@ -187,10 +256,14 @@ Page({
 
   /** 选一套 → 记到这天（一天一套，覆盖原来的） */
   onPick(e) {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    if (this._saving) return
     const id = e.currentTarget.dataset.id
     const date = this.data.selDate
     if (!id || !date) return
     const card = this._byId[id]
+    if (!card) return
+    this._saving = true
     // 乐观更新：界面立刻显示；接口失败会把缓存拉回云端真相 + 弹提示
     cloud.commit(
       () => { store.setWear(date, id); this.setData({ sheet: false }, () => this.refresh()) },
@@ -200,11 +273,13 @@ Page({
     }).catch((err) => {
       this.refresh()
       wx.showModal({ title: T.t('calendar.mark_fail_title'), content: (err && err.msg) || T.t('common.retry_later'), showCancel: false })
-    })
+    }).finally(() => { this._saving = false })
   },
 
   /** 清除这天的记录（没记录时只关弹层） */
   onClearDay() {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    if (this._saving) return
     const date = this.data.selDate
     if (!store.wearOf(date)) {
       this.setData({ sheet: false })
@@ -215,7 +290,8 @@ Page({
       content: T.t('calendar.clear_content'),
       confirmText: T.t('calendar.clear_ok'),
       success: (r) => {
-        if (!r.confirm) return
+        if (!r.confirm || !this.checkLogin() || this._saving) return
+        this._saving = true
         cloud.commit(
           () => { store.clearWear(date); this.setData({ sheet: false }, () => this.refresh()) },
           () => cloud.setWear(date, '')
@@ -224,7 +300,7 @@ Page({
         }).catch((err) => {
           this.refresh()
           wx.showModal({ title: T.t('calendar.clear_fail_title'), content: (err && err.msg) || T.t('common.retry_later'), showCancel: false })
-        })
+        }).finally(() => { this._saving = false })
       }
     })
   }

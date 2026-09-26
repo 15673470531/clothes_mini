@@ -1,11 +1,12 @@
 /**
  * 衣橱（tab 0）
  *
- * 概览数字放在内容卡里（不做独立标题栏）。
+ * 页首为紧凑分类区，数量以辅助文字显示在图片墙上方。
  * 筛选分两级：一级品类（横向胶囊）→ 二级类目（选中具体品类后才出现，一行均分）；
  * 列表是图片墙：有照片显示照片，没有用「颜色块 + 品类图标」，格子下留一行小字。
  */
 
+const usage = require('../../utils/usage.js')
 const store = require('../../utils/store.js')
 const mock = require('../../utils/mock.js')
 const cloud = require('../../utils/cloud.js')
@@ -16,16 +17,20 @@ const assets = require('../../utils/assets.js')
 
 Page({
   data: {
+    loggedIn: false,
+    syncing: false,
+    syncError: false,
     total: 0,
+    pendingCount: 0,
     cats: mock.CATEGORIES,
     catKey: 'all',
     subs: [],        // 二级类目条：[{ key:'', name:'全部' }, ...细分]；选「全部」品类时为空数组 → 不显示
     subKey: '',
     list: [],
     emptyText: '',
+    washNote: '',        // 「N 件白底图正在生成」那行（没有生成中的就是空串 → 不显示）
     emptyReal: false,     // 真的空衣橱（不是"这个分类下没有"）—— 只有这种情况才放插画和宣传语
-    emptyPic: '',         // 空态插画（后端下发，见 utils/assets.js；拿不到就只显示文字）
-    headerPic: '',        // 顶部「N 件衣物」那栏右侧的小插画（做小一点，别顶高卡片）
+    emptyPic: assets.fallback('empty.wardrobe'), // 新版包内插画，首屏即可显示
     emptySlogan: ''       // 空态那句宣传语（文案表下发）
   },
 
@@ -38,9 +43,57 @@ Page({
     // 先用缓存把画面立刻刷出来（不白屏）→ 再拉云端，真有变化才重画一遍
     // ready() 里还会把没上云的照片补传，传成功了要重画一次（把「待上传」角标去掉）
     this.refresh()
-    cloud.ready().then((r) => {
-      if (r && (r.changed || (r.upload && r.upload.uploaded))) this.refresh()
-    })
+    this.syncPage()
+  },
+
+  // 同步期间保留缓存；首次无数据时不误报为空衣橱/空搭配。
+  syncPage() {
+    if (!this.checkLogin()) return
+    if (this._syncing) return
+    this._syncing = true
+    this.setData({ syncing: true, syncError: false })
+    return cloud.ready().then((r) => {
+      if (!this.checkLogin()) return
+      this.refresh()
+      if (!(r && r.error) && this.data.total === 0) usage.once('wardrobe_empty', 'wardrobe')
+      this.setData({ syncing: false, syncError: !!(r && r.error) })
+    }).catch(() => {
+      if (!this.checkLogin()) return
+      this.setData({ syncing: false, syncError: true })
+    }).then(() => { this._syncing = false })
+  },
+
+  onRetrySync() { this.syncPage() },
+
+  checkLogin() {
+    const loggedIn = api.isLoggedIn()
+    if (!loggedIn) {
+      this.setData({ loggedIn: false, list: [], total: 0, pendingCount: 0, subs: [], syncing: false, syncError: false, emptyReal: true })
+      return false
+    }
+    this.setData({ loggedIn: true })
+    return true
+  },
+
+  onGoLogin() {
+    wx.switchTab({ url: '/pages/mine/mine' })
+  },
+
+  onHide() {
+    // 原生图片预览也会触发 onHide；页面隐藏不代表退出登录。
+    this.checkLogin()
+    // 离开页面就别再盯白底图了（回来时 refresh() 会自己再算一次）
+    if (this._washTimer) {
+      clearTimeout(this._washTimer)
+      this._washTimer = null
+    }
+  },
+
+  onListImageError(e) {
+    const index = e.currentTarget.dataset.index
+    const updates = {}
+    updates['list[' + index + '].image'] = ''
+    this.setData(updates)
   },
 
   /**
@@ -48,7 +101,8 @@ Page({
    * 注意：subKey 会在这里被纠正（切了品类之后原来的二级可能不存在了）
    */
   refresh() {
-    const all = store.getItems()
+    const loggedIn = this.checkLogin()
+    const all = loggedIn ? store.getItems() : []
     const cat = this.data.catKey
 
     // 二级条：只在选中具体一级品类时出现（「全部」品类没有二级）
@@ -66,7 +120,7 @@ Page({
         // 没选颜色时用中性灰块，而不是被当成「黑」
         const b = mock.blockOf(i.colors)
         // 右下角小圆点（2026-09）：照片存哪了，只给个颜色，不写字
-        // 口径集中在 cloud.photoBadge（wait 灰 / oss 绿 / local 黄），别在这重写
+        // 口径集中在 cloud.photoBadge（wait 灰 / local 黄 / OSS 成功不显示），别在这重写
         const badge = cloud.photoBadge(i)
         return {
           id: i.id,
@@ -80,39 +134,87 @@ Page({
         }
       })
 
+    // 白底图生成中（2026-09 方案 6：格子不标、列表顶一行提示）
+    //  ① 排队中 / 正在洗（后端 pull 带下来的 normalizeStatus）算
+    //  ② **刚加的**（10 分钟内）也算：照片是后台上传的，后端要等照片上了 OSS 才真正入队，
+    //     本机状态那一刻还是空的 —— 不认这一条，用户刚保存完返回衣橱就看不到这行提示
+    //     （用户实测反馈："点了添加衣物，顶部没有文字"）
+    const now = Date.now()
+    const washing = all.filter(i => {
+      const st = String(i.normalizeStatus || '')
+      if (st === 'queued' || st === 'running') return true
+      if (st === 'failed' || st === 'done') return false
+      if (i.normalizedUrl) return false                       // 已经有白底图 → 不会再洗
+      if (i.normalizeAuto === false) return false             // 这件关掉了自动洗
+      if (!(i.image || i.imageUrl)) return false              // 没照片，洗不了
+      return now - (i.createdAt || 0) < 10 * 60 * 1000         // 只认刚加的，老数据不瞎猜
+    }).length
+
     this.setData({
       total: all.length,
+      pendingCount: loggedIn ? store.pendingPhotoCount() : 0,
       subs,
       subKey,
       list,
       emptyText: all.length === 0
         ? '衣橱还是空的，点右下角「＋」记一件'
-        : (subKey ? '这个细分下还没有衣物' : '这个分类下还没有衣物'),
-      emptyReal: all.length === 0
+        : '还没有' + (subKey ? mock.subName(cat, subKey) : mock.categoryOf(cat).name),
+      emptyReal: all.length === 0,
+      // 白底图生成中的件数（2026-09 自动洗白底）→ 列表顶上一行总提示；格子不再放圆点（用户选方案 6）
+      washNote: washing > 0 ? T.t('wardrobe.normalize_pending', { n: washing }) : ''
     })
 
-    // 空态插画 + 宣传语：图在后端（utils/assets.js，换图不用发版），文案在文案表
+    // 还在生成 → 隔几秒补拉一次，洗完用户能直接看到换成白底图（只在有活干的时候跑，不是常驻轮询）
+    this.pollWash(washing)
+
+    // 空态采用新版包内插画，避免服务器旧图覆盖；宣传语仍取文案表
     // 拉不到就只有文字，页面照常显示（绝不出现破图）
     assets.ensure().then(() => {
       this.setData({
-        emptyPic: assets.pick('empty.wardrobe'),
-        headerPic: assets.pick('wardrobe.header'),
+        emptyPic: assets.fallback('empty.wardrobe'),
         emptySlogan: T.t('slogan.wardrobe_empty')
       })
     })
-  },
-
-  /** 顶部小插画加载失败（域名没白名单/格式不认/断网）→ 换包内本地图，拿不到就不显示这一块 */
-  onHeaderPicErr() {
-    const local = assets.fallback('wardrobe.header')
-    if (local && local !== this.data.headerPic) this.setData({ headerPic: local })
-    else this.setData({ headerPic: '' })
   },
 
   /** 远端插画加载失败（域名没白名单/格式不认/断网）→ 换包内本地图，别留个空位 */
   onEmptyPicErr() {
     const local = assets.fallback('empty.wardrobe')
     if (local && local !== this.data.emptyPic) this.setData({ emptyPic: local })
+  },
+
+  /**
+   * 白底图还在生成时：每隔 7 秒补拉一次数据（洗完那件就会自动换成白底图）
+   *
+   * 为什么不常驻轮询：只有"确实在生成"时才跑，且最多 12 轮（约 1.5 分钟），
+   * 洗完（件数归零）自己就停了 —— 省电、也省流量。
+   * 一张白底图 10~20 秒，所以通常两三轮就能看到结果。
+   */
+  pollWash(pending) {
+    if (this._washTimer) return          // 已经排着了，别排第二次
+
+    if (!pending) {
+      this._washRounds = 0
+      return
+    }
+
+    this._washRounds = (this._washRounds || 0) + 1
+    if (this._washRounds > 12) return     // 兜底：洗太久就不盯了，下次进页面自然会看到
+
+    this._washTimer = setTimeout(() => {
+      this._washTimer = null
+      cloud.ready().then(() => this.refresh()).catch(() => {})
+    }, 7000)
+  },
+
+  onContinuePending() {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    if (!store.pendingPhotoCount()) { this.refresh(); return }
+    wx.navigateTo({ url: '/pages/item-edit/item-edit' })
+  },
+
+  onViewAll() {
+    this.setData({ catKey: 'all', subKey: '' }, () => this.refresh())
   },
 
   onCat(e) {
@@ -130,7 +232,9 @@ Page({
    * 录入页一张张填（点保存自动翻下一张）。
    * 上次没录完的队列还留在本机 —— 这里先问一句「继续 / 丢掉」，别默默把人家选的照片扔了。
    */
-  onAdd() {
+  onAdd(e) {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    usage.track('add_click', 'wardrobe', { source: e && e.currentTarget.dataset.source || 'fab' })
     const left = store.pendingPhotoCount()
     if (left > 0) {
       wx.showModal({
@@ -169,6 +273,7 @@ Page({
       const left = Math.min(total, daily)   // 两个都要够（一个衣架挂一件衣物）
 
       if (left <= 0) {
+        usage.track('quota_block', 'wardrobe', { code: daily <= 0 ? '4002' : '4001' })
         const isDaily = daily <= 0
 
         wx.showModal({
@@ -215,7 +320,8 @@ Page({
       itemList: ['拍照', '从相册选择（最多 ' + cap + ' 张）'],
       success: (res) => {
         this.pickPhoto(res.tapIndex === 0 ? ['camera'] : ['album'], cap)
-      }
+      },
+      fail: err => usage.track(/cancel/i.test(err.errMsg || '') ? 'photo_cancel' : 'photo_fail', 'wardrobe')
     })
   },
 
@@ -225,6 +331,7 @@ Page({
    *   不然本机用户目录会被顶满）
    */
   pickPhoto(sourceType, max) {
+    usage.track('photo_start', 'wardrobe', { source: sourceType[0] })
     const camera = sourceType[0] === 'camera'
     wx.chooseMedia({
       count: camera ? 1 : (max || 9),
@@ -232,11 +339,12 @@ Page({
       sourceType,
       sizeType: ['compressed'],
       success: (res) => {
+        usage.track('photo_success', 'wardrobe', { source: sourceType[0], count: (res.tempFiles || []).length })
         const files = (res.tempFiles || []).map(f => f.tempFilePath).filter(Boolean)
         if (files.length) this.savePhotos(files)
       },
       // 用户取消选照片：什么都不做，留在衣橱页
-      fail: () => {}
+      fail: err => usage.track(/cancel/i.test(err.errMsg || '') ? 'photo_cancel' : 'photo_fail', 'wardrobe', { source: sourceType[0], code: /cancel/i.test(err.errMsg || '') ? '' : usage.code(err) })
     })
   },
 
@@ -262,6 +370,7 @@ Page({
 
     next(0).then(() => {
       wx.hideLoading()
+      if (failed) usage.track('prepare_fail', 'wardrobe', { count: failed })
       if (!done.length) {
         wx.showToast({ title: T.t('wardrobe.photo_save_fail'), icon: 'none' })
         return
@@ -272,19 +381,43 @@ Page({
     })
   },
 
-  /**
-   * 点某个格子 → **直接进编辑页**（2026-09 用户要求：不再弹「编辑/删除」菜单）
-   * 删除挪到两处：编辑页底部那行，以及列表长按（跟穿搭列表同一个手感）
-   */
+  /** 图片点击预览当前分类，缺少照片时直接编辑。 */
   onOpenItem(e) {
-    if (Date.now() - (this._longPressAt || 0) < 600) return   // 长按结束后紧跟的 tap 挡掉，别删完又跳页
-    wx.navigateTo({ url: '/pages/item-edit/item-edit?id=' + e.currentTarget.dataset.id })
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    if (Date.now() - (this._longPressAt || 0) < 600) return
+    const id = e.currentTarget.dataset.id
+    const item = this.data.list.find(i => i.id === id)
+    if (!item) return
+    if (!item.image) return this.editItem(id)
+    wx.previewImage({
+      current: item.image,
+      urls: this.data.list.filter(i => i.image).map(i => i.image),
+      fail: () => wx.showToast({ title: '图片预览失败，请重试', icon: 'none' })
+    })
   },
 
-  /** 长按格子 → 删除（确认逻辑跟以前一样：被搭配用着会告诉你是哪几套） */
+  editItem(id) {
+    wx.navigateTo({ url: '/pages/item-edit/item-edit?id=' + encodeURIComponent(id) })
+  },
+
+  noop() {},
+
+  onMoreItem(e) {
+    if (!this.checkLogin()) { this.onGoLogin(); return }
+    const id = e.currentTarget.dataset.id
+    wx.showActionSheet({
+      itemList: ['编辑衣物', '删除衣物'],
+      success: r => {
+        if (r.tapIndex === 0) this.editItem(id)
+        if (r.tapIndex === 1) this.confirmDelete(id)
+      }
+    })
+  },
+
+  /** 长按打开相同菜单；删除继续保留引用检查及确认。 */
   onLongPressItem(e) {
     this._longPressAt = Date.now()
-    this.confirmDelete(e.currentTarget.dataset.id)
+    this.onMoreItem(e)
   },
 
   /**

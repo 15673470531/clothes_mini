@@ -26,6 +26,49 @@
     </view>
   </view>
 
+  <view class="card sec">
+    <view class="sec-title">首次录入行为观察</view>
+    <view class="usage-tabs">
+      <view wx:for="{{dayOptions}}" wx:key="*this" class="tag {{usageDays === item ? 'tag-on' : 'tag-off'}}"
+        data-days="{{item}}" bindtap="onUsageDays">近 {{item}} 天</view>
+    </view>
+    <view wx:if="{{usageLoading}}" class="rule">正在加载行为数据…</view>
+    <view wx:if="{{usageError}}" class="rule tip-err" bindtap="loadUsage">{{usageError}} · 点击重试</view>
+    <block wx:if="{{usage}}">
+      <view class="rule">{{usage.sessions}} 次访问 · {{usage.loginUsers}} 人完成登录</view>
+      <view class="usage-step" wx:for="{{usage.funnel}}" wx:key="name">
+        <text class="usage-label">{{index + 1}}. {{item.label}}</text>
+        <text class="usage-count">{{item.count}}</text>
+        <text class="usage-rate">{{item.rate}}</text>
+      </view>
+      <view class="rule">右侧百分比为上一步到这一步的转化率。</view>
+      <view class="rule">{{usage.note}}</view>
+      <view wx:if="{{usage.truncated}}" class="rule tip-err">记录较多，仅分析最近 20000 条，建议缩短时间范围。</view>
+      <view wx:if="{{!usage.sessions}}" class="rule">暂无数据。新版上线后才开始记录，历史行为无法补回。</view>
+      <view class="usage-heading">取消与异常</view>
+      <view wx:if="{{!usage.errors.length}}" class="rule">暂无记录</view>
+      <view class="usage-step" wx:for="{{usage.errors}}" wx:key="index">
+        <view class="usage-label">{{item.label}}<text class="usage-detail">{{item.detail}}</text></view>
+        <text>{{item.count}} 次</text>
+      </view>
+      <view class="usage-heading">最近访问 · 点击展开时间线</view>
+      <view class="usage-visit" wx:for="{{usage.visits}}" wx:key="key" wx:for-item="visit">
+        <view bindtap="onVisit" data-key="{{visit.key}}">
+          <view class="usage-step"><text>用户 #{{visit.userId}}</text><text class="t-weak">{{visit.time}}</text></view>
+          <view class="rule">{{visit.saved ? '本次有保存成功' : '未记录到保存成功'}} · 最后：{{visit.last}}</view>
+        </view>
+        <view wx:if="{{expandedVisit === visit.key}}" class="usage-timeline">
+          <view wx:for="{{visit.timeline}}" wx:key="id" wx:for-item="event" class="usage-event">
+            <view class="usage-detail">{{event.time}}</view>
+            <view>{{event.label}}</view>
+            <view wx:if="{{event.detail}}" class="usage-detail">{{event.detail}}</view>
+          </view>
+          <view wx:if="{{visit.trimmed}}" class="rule">仅显示本次访问最后100条记录。</view>
+        </view>
+      </view>
+    </block>
+  </view>
+
   <!-- 口径说明：数字跟后台对不上时看这里 -->
   <view class="card sec" wx:if="{{groups.length > 0}}">
     <view class="sec-title">口径说明</view>

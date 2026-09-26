@@ -26,7 +26,7 @@
   width: 240rpx;
   height: 240rpx;
   border-radius: 20rpx;
-  background: var(--bg);
+  background: var(--card);
 }
 
 .photo-side {
@@ -102,10 +102,8 @@
 
 /* ---- 洗白底（归一化 · 2026-09）：底部一行入口 + 对比弹层 ---- */
 
-.wash-row {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
+/* 自动洗白底整块（2026-09）：勾选行 + 说明 + 状态行，三块共用一张白卡 */
+.wash-box {
   margin: 8rpx 0 20rpx;
   padding: 26rpx 32rpx;
   background: var(--card);
@@ -113,12 +111,71 @@
   box-shadow: var(--shadow);
 }
 
+.wash-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+/* 勾选开关：自绘（项目不引 npm 组件）。开着 = 主题色底 + 圆点右移 */
+.wash-sw {
+  flex: 0 0 auto;
+  width: 84rpx;
+  height: 48rpx;
+  border-radius: 999rpx;
+  background: var(--line-strong);
+  padding: 4rpx;
+  transition: background .2s;
+}
+
+.wash-sw-on {
+  background: var(--brand);
+}
+
+.wash-knob {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.15);
+  transition: transform .2s;
+}
+
+.wash-sw-on .wash-knob {
+  transform: translateX(36rpx);
+}
+
+/* 说明行（用户要求写在这）：会自动跑 / 每天几张 / 原图留着 */
+.wash-note {
+  margin-top: 14rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  line-height: 1.6;
+}
+
+/* 状态行：排队中 / 生成中 / 已生成 / 失败（点它看对比或重试） */
+.wash-state {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid var(--line);
+}
+
+.wash-state-t {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sub);
+  color: var(--brand);
+}
+
 /* 洗过之后左侧挂一张白底缩略图：一眼知道结果长什么样 */
 .wash-thumb {
   width: 96rpx;
   height: 96rpx;
   border-radius: 12rpx;
-  background: var(--bg);
+  background: var(--card);
   flex: 0 0 auto;
 }
 
@@ -144,6 +201,15 @@
   font-size: var(--fs-tiny);
   color: var(--text-weak);
   flex: 0 0 auto;
+}
+
+/* 对比层底部的「重新生成一张」（次要动作，别抢两个主按钮） */
+.cmp-regen {
+  margin-top: 18rpx;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  text-decoration: underline;
 }
 
 .cmp-mask {
@@ -191,7 +257,7 @@
 .cmp-img {
   width: 100%;
   height: 460rpx;
-  background: var(--bg);
+  background: var(--card);
   border-radius: 12rpx;
 }
 
@@ -228,7 +294,7 @@
   border-radius: 999rpx;
   font-size: var(--fs-sub);
   color: var(--text);
-  background: var(--bg);
+  background: var(--image-bg);
 }
 
 /* 当前封面用的就是这张 → 实心主题色（另一个是描边感的白底） */
@@ -360,6 +426,7 @@
 }
 
 .ph-thumb-img {
+  background: var(--card);
   display: block;
   width: 100%;
   height: 100%;
@@ -434,3 +501,10 @@
   font-size: var(--fs-tiny);
   color: var(--text-sub);
 }
+
+.detail-row { display: flex; align-items: center; min-height: 88rpx; gap: 16rpx; border-bottom: 1rpx solid var(--line); }
+.detail-label { flex-shrink: 0; width: 128rpx; font-size: var(--fs-sub); color: var(--text-sub); }
+.detail-input { flex: 1; min-width: 0; font-size: var(--fs-sub); }
+.detail-notes { margin-top: 28rpx; }
+.detail-textarea { width: 100%; height: 160rpx; font-size: var(--fs-sub); line-height: 1.6; }
+.more-head .sec-opt { max-width: 250rpx; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

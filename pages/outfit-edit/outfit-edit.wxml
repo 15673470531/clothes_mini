@@ -33,7 +33,7 @@
       bindtap="onToggleItem"
       data-id="{{item.id}}">
       <view class="pic-wrap">
-        <image wx:if="{{item.image}}" class="wall-pic" src="{{item.image}}" mode="aspectFill"></image>
+        <image wx:if="{{item.image}}" class="wall-pic" src="{{item.image}}" mode="aspectFit"></image>
         <view wx:else class="wall-pic wall-ph {{item.light ? 'thumb-light' : ''}}" style="background:{{item.color}}">
           <text class="thumb-emoji">{{item.emoji}}</text>
         </view>

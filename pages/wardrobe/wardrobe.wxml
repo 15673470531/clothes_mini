@@ -1,17 +1,9 @@
 <view class="page page-with-tab">
+  <view wx:if="{{!loggedIn}}" class="guest-note">游客浏览 · 登录后可保存并同步自己的衣橱和穿搭</view>
 
-  <!-- 概览：数字放在内容卡里；右侧一张横向小插画（2026-09 用户：只有个数字太单一了） -->
-  <view class="card overview">
-    <view class="ov-left">
-      <view class="ov-num">{{total}}</view>
-      <view class="ov-label">件衣物</view>
-    </view>
-    <!-- 插画做小一点：只当装饰，不占卡片高度 -->
-    <image wx:if="{{headerPic}}" class="ov-pic" src="{{headerPic}}" mode="widthFix" lazy-load binderror="onHeaderPicErr"></image>
-  </view>
 
   <!-- 一级品类筛选 -->
-  <scroll-view class="cats" scroll-x>
+  <scroll-view wx:if="{{total > 0 || !loggedIn}}" class="cats" scroll-x>
     <view
       wx:for="{{cats}}"
       wx:key="key"
@@ -21,7 +13,7 @@
   </scroll-view>
 
   <!-- 二级类目：选中具体品类后才出现，一行 flex:1 均分（含「全部」） -->
-  <view wx:if="{{subs.length}}" class="row5 subs">
+  <view wx:if="{{(total > 0 || !loggedIn) && subs.length}}" class="row5 subs">
     <view
       wx:for="{{subs}}"
       wx:key="key"
@@ -30,7 +22,24 @@
       data-key="{{item.key}}">{{item.name}}</view>
   </view>
 
+  <!-- 数量跟随当前筛选；首次加载或失败时不把未知数量显示成零。 -->
+  <view wx:if="{{total > 0}}" class="result-count">
+    {{catKey === 'all' ? '共 ' + total + ' 件' : '当前分类 ' + list.length + ' 件 · 共 ' + total + ' 件'}}
+  </view>
+
+  <!-- 白底图正在生成（2026-09 方案 6）：格子不标，这里给一行总提示；洗完自动消失 -->
+  <view wx:if="{{washNote}}" class="normalize-note">{{washNote}}</view>
+
+  <view wx:if="{{total > 0 && pendingCount > 0}}" class="pending-notice" bindtap="onContinuePending" hover-class="pressed" role="button" aria-label="继续录入照片">
+    <text>还有 {{pendingCount}} 张照片待录入</text>
+    <text class="pending-link">继续 ›</text>
+  </view>
+
   <!-- 图片墙：3 列，有照片显示照片，没有用颜色块 + 品类图标 -->
+  <view wx:if="{{syncError && list.length}}" class="sync-note">
+    <text>暂时无法同步，当前显示已缓存内容</text>
+    <view class="sync-retry" bindtap="onRetrySync">重试</view>
+  </view>
   <view wx:if="{{list.length}}" class="wall">
     <view
       wx:for="{{list}}"
@@ -40,23 +49,47 @@
       bindlongpress="onLongPressItem"
       data-id="{{item.id}}"
       data-name="{{item.text}}">
-      <image wx:if="{{item.image}}" class="wall-pic" src="{{item.image}}" mode="aspectFill"></image>
-      <view wx:else class="wall-pic wall-ph {{item.light ? 'thumb-light' : ''}}" style="background:{{item.color}}">
-        <text class="thumb-emoji">{{item.emoji}}</text>
+      <view class="wall-media">
+        <image wx:if="{{item.image}}" class="wall-pic" src="{{item.image}}" mode="aspectFit" lazy-load binderror="onListImageError" data-index="{{index}}"></image>
+        <view wx:else class="wall-pic wall-ph {{item.light ? 'thumb-light' : ''}}" style="background:{{item.color}}">
+          <text class="thumb-emoji">{{item.emoji}}</text>
+        </view>
+        <!-- 右下角小圆点：照片存哪了（灰=尚未上传成功 / 黄=服务器本地盘，OSS 成功不显示），只给颜色不写字 -->
+        <view wx:if="{{item.badgeKind}}" class="pend pend-{{item.badgeKind}}"></view>
       </view>
-      <!-- 右下角小圆点：照片存哪了（灰=待上传 / 绿=OSS / 黄=服务器本地盘），只给颜色不写字 -->
-      <view wx:if="{{item.badgeKind}}" class="pend pend-{{item.badgeKind}}"></view>
-      <view class="wall-text">{{item.text}}</view>
+      <view class="item-caption">
+        <view class="wall-text">{{item.text}}</view>
+        <view class="item-more" catchtap="onMoreItem" catchlongpress="noop"
+          data-id="{{item.id}}" hover-class="item-more-pressed" role="button" aria-label="更多衣物操作">···</view>
+      </view>
     </view>
   </view>
 
-  <view wx:else class="empty">
-    <image wx:if="{{emptyReal && emptyPic}}" class="empty-img empty-pic-wd"
-      src="{{emptyPic}}" mode="widthFix" lazy-load binderror="onEmptyPicErr"></image>
-    <text wx:if="{{emptyReal && emptySlogan}}" class="empty-slogan">{{emptySlogan}}</text>
-    <text class="empty-text">{{emptyText}}</text>
+  <view wx:elif="{{syncing}}" class="empty">
+    <text class="empty-title">正在加载衣橱…</text>
+    <text class="empty-text">请稍等一下</text>
+  </view>
+  <view wx:elif="{{syncError}}" class="empty">
+    <text class="empty-title">暂时加载不了</text>
+    <text class="empty-text">请检查网络后再试一次</text>
+    <view class="empty-action" hover-class="pressed" bindtap="onRetrySync">重新加载</view>
+  </view>
+  <view wx:elif="{{emptyReal}}" class="empty wardrobe-empty">
+    <image wx:if="{{emptyPic}}" class="empty-img empty-pic-wd"
+      src="{{emptyPic}}" mode="widthFix" binderror="onEmptyPicErr"></image>
+    <text class="wardrobe-empty-title">{{pendingCount ? '选好的照片，接着整理吧' : '从一件常穿的开始'}}</text>
+    <text class="empty-text wardrobe-empty-desc">{{pendingCount ? '还有 ' + pendingCount + ' 张照片待录入' : '先放进一件常穿的，慢慢整理你的衣橱'}}</text>
+    <text wx:if="{{!pendingCount}}" class="wardrobe-empty-hint">支持拍照或相册多选</text>
+    <view wx:if="{{pendingCount}}" class="empty-action" hover-class="pressed" bindtap="onContinuePending">继续录入</view>
+    <view wx:else class="empty-action" hover-class="pressed" bindtap="onAdd" data-source="empty">添加第一件衣物</view>
+  </view>
+  <view wx:else class="empty wardrobe-filter-empty">
+    <text class="wardrobe-empty-title">{{emptyText}}</text>
+    <text class="empty-text wardrobe-empty-desc">换个分类，看看衣橱里的其他衣物</text>
+    <view class="empty-action" hover-class="pressed" bindtap="onViewAll">查看全部衣物</view>
   </view>
 
   <view class="gap"></view>
-  <view class="fab" bindtap="onAdd">＋</view>
+  <view wx:if="{{total > 0}}" class="fab" bindtap="onAdd" data-source="fab" role="button" aria-label="添加衣物">＋</view>
+
 </view>

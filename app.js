@@ -11,6 +11,9 @@ App({
     baseUrl: 'https://clothes.guozeshui.top/api',
   },
 
+  onShow() { require('./utils/usage.js').visit() },
+  onHide() { require('./utils/usage.js').flush() },
+
   onLaunch() {
     // 文案表：启动拉一次（拉到就用后端下发的，拉不到就用 utils/texts.js 里的本地默认）
     // 用户 2026-09 定：前端提示语都由后端下发，改文案不用发小程序版本

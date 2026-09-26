@@ -76,7 +76,7 @@
 .cal-cell {
   position: relative;
   width: calc((100% - 48rpx) / 7);
-  height: 127rpx;
+  height: 104rpx;
 }
 
 .cal-blank {
@@ -103,7 +103,8 @@
 
 /* 今天：日期浅紫底；选中：日期实心主题色 */
 .cal-today .cal-num-t {
-  background: var(--brand-light);
+  background: transparent;
+  box-shadow: inset 0 0 0 2rpx var(--brand);
   color: var(--brand);
   font-weight: 600;
 }
@@ -116,8 +117,10 @@
 
 /* 那天的穿搭图（日期下面）：方形、跟格宽同宽 */
 .cal-pic {
-  width: 100%;
-  height: 93rpx;
+  width: 64rpx;
+  height: 64rpx;
+  display: block;
+  margin: 4rpx auto 0;
   border-radius: 12rpx;
   background: var(--fill);
 }
@@ -171,7 +174,7 @@
 }
 
 .cal-dayname {
-  font-size: var(--fs-title);
+  font-size: var(--fs-strong);
   font-weight: 600;
   color: var(--text);
 }
@@ -393,4 +396,25 @@
 
 /* 「选一套」弹层空态：插画 + 一句话（弹层里空间小，上下留白收一点） */
 .empty-in-sheet { padding: 40rpx 40rpx 50rpx; }
-.empty-pic-cal { width: 460rpx; }
+.empty-pic-cal { width: 240rpx; }
+
+/* 紧凑月历：只有记录展示缩略图，空日期不绘制灰色槽位。 */
+.cal-navs { align-items: center; gap: 8rpx; }
+.cal-return { padding: 16rpx 12rpx; color: var(--brand); font-size: var(--fs-tiny); }
+.cal-nav { width: 56rpx; height: 56rpx; background: transparent; }
+.cal-pic, .cal-daypic, .sh-cell image.wall-pic { background: var(--card); }
+.cal-record-dot { width: 10rpx; height: 10rpx; margin: 20rpx auto; border-radius: 50%; background: var(--brand); }
+.cal-day { box-shadow: none; }
+.cal-daypic { width: 224rpx; height: 224rpx; border-radius: 16rpx; }
+.cal-dayname { overflow-wrap: break-word; }
+.cal-preview-hint { margin-top: 12rpx; color: var(--brand); font-size: var(--fs-tiny); }
+.cal-no-cover { display: flex; align-items: center; justify-content: center; color: var(--text-weak); background: var(--fill); font-size: var(--fs-tiny); }
+.cal-daynone { padding: 12rpx 0 8rpx; }
+.cal-empty-title { display: block; font-size: var(--fs-strong); font-weight: 600; color: var(--text); }
+.cal-empty-desc { display: block; margin-top: 12rpx; color: var(--text-weak); font-size: var(--fs-sub); line-height: 1.7; }
+.sh-cell { width: calc((100% - 16rpx) / 2); }
+.sh-cell .wall-pic { height: 319rpx; border-radius: 16rpx; }
+.sh-cell .wall-text { text-align: left; padding: 0 4rpx 12rpx; }
+.sh-close { padding: 16rpx; }
+.login-empty { padding-top: 96rpx; }
+.login-title { display: block; margin-bottom: 14rpx; font-size: var(--fs-strong); color: var(--text); font-weight: 600; }

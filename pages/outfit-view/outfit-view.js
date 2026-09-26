@@ -1,3 +1,4 @@
+const personalTryon = require('../../utils/personal-tryon.js')
 /**
  * 搭配预览：保存搭配之后进这页，9 个位置按用户排的样子摆出来，位置可以拖
  *
@@ -37,7 +38,6 @@ const layout = require('../../utils/outfit-layout.js')
 const { shoot } = require('../../utils/outfit-photo.js')
 const cloud = require('../../utils/cloud.js')
 const T = require('../../utils/texts.js')
-const api = require('../../utils/api.js')
 
 const LONG_PRESS = 250        // 长按多久进入拖拽（毫秒）
 const MOVE_TOLERANCE = 8      // 长按期间手指移动超过这个距离就当翻页/滚动，不拖拽
@@ -53,7 +53,11 @@ function phUnits(s) {
 
 Page({
   data: {
+    personalTryonVisible: false,
     id: '',
+    previewBusy: false,
+    dropIndex: -1,
+    dragHint: '',
     name: '',
     namePh: '可不填',       // 名称输入框的灰色提示（选了场合就换成自动描述，见 namePhOf）
     isDraft: false,         // 新建搭配还没点「完成」：这页只是预览，返回就放弃
@@ -68,8 +72,6 @@ Page({
     slots: [],              // 位置表（id 或 null）
     missing: 0,
     notFound: false,
-    // 试穿按钮：后端开关 + 登录 + 今天还有次数 都满足才显示（免得点进去是死路）
-    showTryon: false,
     // 拖拽态
     dragging: false,
     dragItem: null,
@@ -85,51 +87,26 @@ Page({
   },
 
   /** 从挑选页返回时也要重读（搭配内容可能刚改过），所以 onShow 再读一次 */
+  onPersonalTryon() { personalTryon.open('?outfitId=' + encodeURIComponent(this.data.id)) },
+
   onShow() {
+    personalTryon.visibility(this)
+    // 原生大图预览返回时保留正在编辑的内容，不重新拉取覆盖。
+    if (this._returningPreview) { this._returningPreview = false; return }
     if (!this.data.id) return
     this.load()
     this.applyPendingCell()
-    this.loadTryonEntry()
     // 拉一次云端最新（本机只是渲染缓存）；草稿不上云，所以不会被拉没
     cloud.pull().then((r) => {
       if (r && r.changed) { this.load(); this.applyPendingCell() }
     })
   },
 
-  /**
-   * 试穿入口要不要显示
-   *
-   * 2026-09 改口径：**入口只在"后端开关没开"或"没登录"时隐藏**；
-   * 次数用完照样显示（进去点的时候才提示"今天的次数用完了"）——
-   * 之前把"次数用完"也一起隐藏，结果入口凭空消失，像是功能没了（用户报过一次）。
-   *
-   * 隐藏时往控制台打一条原因：静默失败最难查，出问题一眼能看到是 401 还是别的。
-   */
-  loadTryonEntry() {
-    api.tryon.quota().then((q) => {
-      this.setData({ showTryon: !!(q && q.enabled) })
-    }).catch((err) => {
-      console.log('[tryon] 试穿入口没显示，原因：', (err && (err.code || err.msg || err.errMsg)) || err)
-      this.setData({ showTryon: false })
-    })
-  },
-
-  /**
-   * 试穿：把这套搭配交给后端生成"真人上身图"（在新页面里提交 + 轮询）
-   * 草稿（还没点「完成」）不能试：那套搭配还没上云，后端不知道它
-   */
-  onTryOn() {
-    const o = store.getOutfit(this.data.id)
-    if (!o || o.draft) {
-      wx.showToast({ title: T.t('outfitView.need_save_first'), icon: 'none' })
-      return
-    }
-    wx.navigateTo({ url: '/pages/tryon/tryon?id=' + this.data.id })
-  },
-
   /** 离开这页时清掉计时器；**还没点过「完成」的草稿就丢掉**（直接返回 = 这套搭配不保存）
    *  点过「完成」的已经转正（不带 draft 标记），这里不会动它 */
   onUnload() {
+    this._unloaded = true
+    clearTimeout(this._dropTimer)
     clearTimeout(this._pressTimer)
     clearTimeout(this._coverTimer)
     const o = store.getOutfit(this.data.id)
@@ -308,7 +285,12 @@ Page({
       }
       return
     }
-    this.setData({ dragX: t.clientX, dragY: t.clientY, dragHot: this.hitCell(t.clientX, t.clientY) })
+    const hot = this.hitCell(t.clientX, t.clientY)
+    const target = this.data.cells[hot]
+    this.setData({
+      dragX: t.clientX, dragY: t.clientY, dragHot: hot,
+      dragHint: hot < 0 ? '松手放回原位' : (hot === this.data.dragFrom ? '拖到其他格子调整位置' : (target && target.item ? '松手交换两件衣物' : '松手放到这里'))
+    })
   },
 
   onCellEnd() {
@@ -317,13 +299,24 @@ Page({
     const from = this.data.dragFrom
     const hot = this.data.dragHot
     this._dragAt = Date.now()
-    this.setData({ dragging: false, dragItem: null, dragFrom: -1, dragHot: -1 })
+    this.setData({ dragging: false, dragItem: null, dragFrom: -1, dragHot: -1, dragHint: '' })
     if (hot < 0 || hot === from) return                     // 拖到格子外 / 原地松手 → 位置不变
     const slots = this.data.slots.slice()
     const a = slots[from]
     slots[from] = slots[hot]                                // 目标格有衣物 → 交换；空的 → 移过去
     slots[hot] = a
     this.applySlots(slots)
+    this.setData({ dropIndex: hot })
+    clearTimeout(this._dropTimer)
+    this._dropTimer = setTimeout(() => this.setData({ dropIndex: -1 }), 450)
+    try { wx.vibrateShort({ type: 'light' }) } catch (e) {}
+  },
+
+  // 系统打断手势时只取消，不把 touchcancel 当成一次放置。
+  onCellCancel() {
+    clearTimeout(this._pressTimer)
+    if (this.data.dragging) this._dragAt = Date.now()
+    this.setData({ dragging: false, dragItem: null, dragFrom: -1, dragHot: -1, dragHint: '' })
   },
 
   /** 进入拖拽态：震动一下 + 幽灵跟手 */
@@ -332,7 +325,8 @@ Page({
     if (!cell || !cell.item) return
     this._dragAt = Date.now()
     try { wx.vibrateShort({ type: 'light' }) } catch (e) { /* 工具/部分机型不支持，忽略 */ }
-    this.setData({ dragging: true, dragFrom: idx, dragItem: cell.item, dragX: x, dragY: y, dragHot: idx })
+    clearTimeout(this._dropTimer)
+    this.setData({ dropIndex: -1, dragHint: '拖到其他格子调整位置', dragging: true, dragFrom: idx, dragItem: cell.item, dragX: x, dragY: y, dragHot: idx })
   },
 
   /** 量 9 个格子在屏幕上的位置（跟手指坐标同一套坐标系） */
@@ -508,6 +502,36 @@ Page({
           content: T.t('outfitView.save_fail_content', { msg: (err && err.msg) || T.t('common.retry_later') }),
           showCancel: false
         })
+      })
+    })
+  },
+
+  /** 只生成临时预览图，不写封面、不提交搭配、不扣衣架。 */
+  onPreview() {
+    if (this.data.previewBusy || this.data.dragging) return
+    if (!this.data.items.length) {
+      wx.showToast({ title: '先选择一件衣物再预览', icon: 'none' })
+      return
+    }
+    this.setData({ previewBusy: true })
+    wx.showLoading({ title: '正在生成预览', mask: true })
+    // 与保存本地共用出图规则，预览内容就是当前编辑结果。
+    shoot(this, { items: this.data.items, slots: this.data.slots, kind: 'album', destPath: '' }, (path) => {
+      wx.hideLoading()
+      if (this._unloaded) return
+      this.setData({ previewBusy: false })
+      if (!path) {
+        wx.showToast({ title: '预览生成失败，请重试', icon: 'none' })
+        return
+      }
+      this._returningPreview = true
+      wx.previewImage({
+        current: path,
+        urls: [path],
+        fail: () => {
+          this._returningPreview = false
+          wx.showToast({ title: '预览打开失败，请重试', icon: 'none' })
+        }
       })
     })
   },

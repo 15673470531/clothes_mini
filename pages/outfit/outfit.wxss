@@ -6,7 +6,7 @@
 
 /* 和顶部那排场合选项之间留点间距（用户 2026-09：贴着太挤） */
 .oc-wall {
-  margin-top: 20rpx;
+  margin-top: 0;
 }
 
 /* 每套搭配一张白底卡：图 + 名字都包在卡里（跟日历页/我的页的卡片风格统一）
@@ -17,17 +17,24 @@
   padding: 12rpx 12rpx 16rpx;
   background: var(--card);
   border-radius: var(--r-card);
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 .oc-cell .wall-pic {
   height: 319rpx;
+  background: #fff;
+  border-radius: 12rpx;
 }
 
 /* 名字在卡里，跟图留一点距离 */
 .oc-cell .wall-text {
-  margin-top: 12rpx;
+  margin-top: 0;
   font-size: var(--fs-sub);
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  flex: 1;
+  min-width: 0;
 }
 
 /* 缩略图外面包一层，用来放角标 */
@@ -53,7 +60,8 @@
 
 /* 有衣物被删除：警示色 */
 .oc-badge-warn {
-  background: var(--warning);
+  background: var(--fill);
+  color: var(--text-sub);
 }
 
 /* 右下角小圆点：封面存哪了（只给颜色，不写字，口径同衣橱）
@@ -69,8 +77,8 @@
   box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.25);
 }
 
-.oc-store-oss {
-  background: var(--success);
+.oc-store-wait {
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .oc-store-local {
@@ -78,4 +86,75 @@
 }
 
 /* 空态插画（后端下发的透明底图） */
-.empty-pic-ot { width: 420rpx; }
+.empty-pic-ot { width: 320rpx; }
+
+/* 与衣橱一致的紧凑筛选区。 */
+.cats { margin-bottom: 12rpx; }
+.cat { padding: 14rpx 24rpx; margin-right: 12rpx; color: var(--text-sub); }
+.cat.tag-on { color: var(--brand); font-weight: 600; }
+.result-count {
+  margin: 4rpx 4rpx 16rpx;
+  color: var(--text-weak);
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+}
+.oc-info { padding: 8rpx 8rpx 0; }
+.oc-title-row { display: flex; align-items: center; gap: 8rpx; }
+.oc-more {
+  width: 64rpx;
+  height: 64rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-sub);
+  font-size: var(--fs-strong);
+  border-radius: var(--r-pill);
+}
+.oc-more-pressed { background: var(--fill); }
+.oc-meta {
+  color: var(--text-weak);
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 兜底拼图与正式封面等高，图片切换时卡片不跳动。 */
+.oc-collage {
+  height: 319rpx;
+  padding: 12rpx;
+  border-radius: 12rpx;
+  background: #fff;
+  display: grid;
+  gap: 8rpx;
+}
+.oc-cols-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.oc-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); }
+.oc-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); }
+.oc-tile { min-width: 0; min-height: 0; overflow: hidden; border-radius: 12rpx; }
+.oc-tile-image { display: block; width: 100%; height: 100%; }
+.oc-tile-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-title);
+}
+.oc-no-items {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12rpx; color: var(--text-weak); font-size: var(--fs-tiny);
+}
+.oc-no-items-title { color: var(--text-sub); }
+
+/* 仅用于生成缺封面的临时预览，不写入搭配记录。 */
+.preview-canvas { position: fixed; left: -9999rpx; top: 0; width: 375px; height: 375px; }
+
+.login-empty { padding-top: 64rpx; }
+.login-title { display: block; margin-bottom: 12rpx; color: var(--text); font-size: var(--fs-strong); font-weight: 600; }
+
+/* 空态：插画、标题、说明和一个主入口。 */
+.outfit-empty { padding: 52rpx 24rpx 72rpx; }
+.outfit-empty .empty-img, .login-empty .empty-img { margin-bottom: 28rpx; }
+.outfit-empty-title { display: block; color: var(--text); font-size: var(--fs-strong); font-weight: 600; line-height: 1.5; }
+.outfit-empty-desc { margin-top: 14rpx; line-height: 1.8; font-size: var(--fs-sub); }
+.outfit-filter-empty { padding: 96rpx 24rpx; }

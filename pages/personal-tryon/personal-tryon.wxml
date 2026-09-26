@@ -1,0 +1,21 @@
+<view class="page">
+ <view wx:if="{{!loggedIn}}" class="empty"><text class="empty-title">登录，试试自己的上身效果</text><view class="empty-action" bindtap="onLogin">去登录</view></view>
+ <view wx:elif="{{loading}}" class="empty">正在加载…</view>
+ <block wx:elif="{{allowed}}">
+  <view class="intro"><view class="title">把喜欢的上衣，穿在自己身上</view><view class="hint">内测仅支持单件上衣 · 效果仅供搭配参考，不代表尺码合身</view></view>
+  <view wx:if="{{!enabled}}" class="notice">服务尚未开启，可以先选择衣物、管理个人照片。</view>
+  <view class="card pad"><view class="section">1. 选择你的照片</view><view class="hint">全身或半身正面照，光线清楚，手臂自然放下，避免遮挡上身。最多保存 5 张。</view>
+   <scroll-view scroll-x class="portrait-scroll"><view class="portrait-row"><view wx:for="{{portraits}}" wx:key="id" class="portrait {{portraitId===item.id?'selected':''}}"><image src="{{item.url}}" mode="aspectFit" data-id="{{item.id}}" bindtap="onChoosePortrait"/><view class="small" data-kind="portrait" data-id="{{item.id}}" bindtap="onDelete">删除</view></view></view></scroll-view>
+   <view wx:if="{{portraits.length < 5}}" class="empty-action" bindtap="onUpload">{{busy?'处理中…':'上传个人照片'}}</view>
+  </view>
+  <view class="card pad"><view class="section">2. 选择一件上衣</view><view class="hint">从衣橱选择；从搭配进入时，仅显示这套里的上衣。请先保存衣物修改。</view>
+   <view class="items"><view wx:for="{{items}}" wx:key="id" class="garment {{itemId===item.id?'selected':''}}" data-id="{{item.id}}" bindtap="onChooseItem"><image src="{{item.image}}" mode="aspectFit"/><view class="name">{{item.name}}</view><text wx:if="{{!item.ready}}" class="hint">等待照片上传</text></view></view>
+   <view wx:if="{{!items.length}}" class="hint">暂无可试穿的上衣，先去衣橱添加一件。</view><view wx:if="{{!items.length}}" class="empty-action" bindtap="onGoWardrobe">去衣橱</view>
+  </view>
+  <view class="card pad"><checkbox-group bindchange="onConsent"><label class="consent"><checkbox value="yes" checked="{{consent}}"/>我确认有权使用所选人像，同意将所选照片交给阿里云试穿服务生成效果。</label></checkbox-group><view class="hint">今日剩余 {{leftToday}} 次 · 独立于衣架额度 · 失败不扣次数</view><button class="generate" disabled="{{busy || !enabled || !portraitId || !selectedItem || !consent || leftToday <= 0}}" bindtap="onGenerate">{{busy?'处理中…':'生成上身效果'}}</button></view>
+  <view wx:if="{{result}}" class="card pad"><view class="section">{{result.name || '本次试穿'}}</view><block wx:if="{{result.status==='done'}}"><view class="small" bindtap="onCompare">{{showOriginal?'正在查看原图 · 切换效果图':'正在查看效果图 · 对比原图'}}</view><image class="result" src="{{showOriginal?result.portraitUrl:result.resultUrl}}" mode="widthFix" bindtap="onPreview"/><view class="empty-action" bindtap="onSave">保存本地</view></block><view wx:elif="{{result.status==='failed'}}" class="hint">{{result.error}}。可在上方重新生成。</view><view wx:else class="hint">正在{{result.status==='pending'?'排队':'生成'}}，你可以离开页面，稍后到「我的试穿」查看。</view></view>
+  <view class="card pad"><view class="section">最近试穿</view><view wx:if="{{!tasks.length}}" class="hint">还没有试穿记录</view><view wx:for="{{tasks}}" wx:key="id" class="history"><view class="history-main" data-id="{{item.id}}" bindtap="onViewTask"><image wx:if="{{item.resultUrl}}" src="{{item.resultUrl}}" mode="aspectFit"/><view><view>{{item.name}} · {{item.statusText}}</view><view class="hint">{{item.createdAt}}</view></view></view><view class="small" data-kind="result" data-id="{{item.id}}" bindtap="onDelete">删除</view></view><view class="hint">仅展示最近 30 条，删除个人照片会同时删除相关记录。</view></view>
+ </block>
+ <view wx:else class="empty">{{error ? '暂时无法连接试穿服务，请确认后端已更新' : '试穿正在内测，当前账号暂未开放'}}</view>
+ <view wx:if="{{error}}" class="notice">{{error}}</view><view wx:if="{{loggedIn}}" class="refresh" bindtap="reload">刷新状态</view>
+</view>

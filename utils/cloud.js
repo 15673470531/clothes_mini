@@ -16,6 +16,7 @@
  *   写      →  cloud.commit(乐观改缓存, 发请求)      先变界面；失败自动拉回云端 + 抛错给调用方提示
  *   存衣物  →  cloud.saveItem(payload)              记录立刻提交，照片后台传
  */
+const usage = require('./usage.js')
 const store = require('./store.js')
 const api = require('./api.js')
 
@@ -29,6 +30,7 @@ function toCloudItem(it) {
   return {
     id: it.id,
     name: it.name || '',
+    ...(it.details ? { details: it.details } : {}),
     category: it.category || '',
     sub: it.sub || '',
     colors: it.colors || [],
@@ -138,6 +140,8 @@ function ensurePhoto(item, onStep) {
  * @return {Promise<object>} 提交成功的记录（此时照片可能还在后台传）
  */
 function saveItem(payload, onStep) {
+  const started = Date.now()
+  const adding = !payload.id || !store.getItem(payload.id)
   const item = Object.assign({}, payload)
   item.imageUrl = item.imageUrl || ''     // 统一口径：还没上云就是空串（缓存里也带这个字段）
   if (!item.id) {
@@ -147,9 +151,13 @@ function saveItem(payload, onStep) {
 
   if (onStep) onStep('保存中…')
   return push({ items: [toCloudItem(item)] }).then(() => {
+    if (adding) usage.track('save_success', 'item-edit', { source: 'single', count: 1, duration: Date.now() - started })
     store.saveItem(item)      // 成功才写进缓存（真相在云端）；本机照片路径留着，等后台补传
     flushUploads()            // 不 await：后台把照片传上去
     return item
+  }).catch(err => {
+    if (adding) usage.track('save_fail', 'item-edit', { source: 'single', code: usage.code(err), duration: Date.now() - started })
+    throw err
   })
 }
 
@@ -165,6 +173,7 @@ function saveItem(payload, onStep) {
  * @return {Promise<Array>} 提交成功的记录
  */
 function saveItems(list, onStep) {
+  const started = Date.now()
   const items = (list || []).filter(Boolean).map(p => {
     const it = Object.assign({}, p)
     it.imageUrl = it.imageUrl || ''
@@ -174,9 +183,13 @@ function saveItems(list, onStep) {
 
   if (onStep) onStep('保存中…')
   return push({ items: items.map(toCloudItem) }).then(() => {
+    usage.track('save_success', 'item-edit', { source: 'batch', count: items.length, duration: Date.now() - started })
     items.forEach(it => store.saveItem(it))   // 成功才写缓存（真相在云端）
     flushUploads()                            // 不 await：照片后台一张张传
     return items
+  }).catch(err => {
+    usage.track('save_fail', 'item-edit', { source: 'batch', code: usage.code(err), duration: Date.now() - started })
+    throw err
   })
 }
 
@@ -326,6 +339,7 @@ function flushUploads() {
         })
       }).catch((err) => {
         bad++
+        usage.track('upload_fail', 'wardrobe', { code: usage.code(err) })
         console.log('[cloud] 照片补传失败，留着下次再传：', (err && err.msg) || err)
         // 今天的上传额度用完了（后端 code 4002）：这趟别再一张张白试了，
         // 照片留在本机，明天打开小程序会自动接着传。提示只弹一次。
@@ -412,10 +426,10 @@ function purgeDemoData() {
 }
 
 /**
- * 照片/封面存哪了 → 角标文案（三态；不挂牌返回 null）
+ * 照片/封面异常提示：成功上传 OSS 不挂牌，返回 null
  *
  *   待上传：本机有照片、云端还没地址（后台上传还没成功）
- *   OSS   ：云端有地址、后端说是对象存储
+ *   OSS   ：云端有地址、后端说是对象存储，不显示圆点
  *   服务器：云端有地址、后端说是服务器本地盘（没配 OSS 时的兜底）
  *
  * driver 优先用后端给的字段；老版本后端不返回时按 URL 形状兜底（含 /storage/ 就是本地盘）。
@@ -424,20 +438,25 @@ function purgeDemoData() {
 function storageBadge(driver, url) {
   if (!url) return null
   const d = driver || (String(url).indexOf('/storage/') >= 0 ? 'local' : 'oss')
-  return { kind: d == 'local' ? 'local' : 'oss' }
+  return d === 'local' ? { kind: 'local' } : null
 }
 
 /** 衣物的照片角标 */
 function photoBadge(it) {
   if (!it) return null
-  // 本机有照片、云端还没地址 = 还在排队补传
+  // 本机有照片、云端还没地址 = 还在排队补传（都还没上传，谈不上洗白底）
   if (it.image && !it.imageUrl) return { kind: 'wait' }
+  // 白底图生成中不放格子角标（2026-09 用户定：方案 6）——
+  // 它只存在十几秒，放角上会一闪而过看不见，而且跟"照片存哪"的点挤在同一角容易混淆；
+  // 改在列表顶部给一行总量提示（见 pages/wardrobe 的 .wash-note）
   return storageBadge(it.imageStorage, it.imageUrl)
 }
 
-/** 搭配封面的角标（封面还没上云不挂牌：本机 canvas 那张照常显示，不用提醒） */
+/** 搭配封面沿用衣物规则：仅本机有图时提示尚未上传成功。 */
 function coverBadge(o) {
-  return storageBadge(o && o.coverStorage, o && o.coverUrl)
+  if (!o) return null
+  if (o.photo && !o.coverUrl) return { kind: 'wait' }
+  return storageBadge(o.coverStorage, o.coverUrl)
 }
 
 /**

@@ -10,8 +10,9 @@
     <button
       class="me-login-btn"
       hover-class="pressed"
-      open-type="chooseAvatar"
-      bindchooseavatar="onChooseAvatar">微信授权登录</button>
+      loading="{{loggingIn}}"
+      disabled="{{loggingIn}}"
+      bindtap="onLogin">{{loggingIn ? '登录中…' : '微信登录'}}</button>
   </view>
 
   <!-- 已登录：一行 = 头像 +（昵称 / ID），头像点了能换（照 money 的一行布局） -->
@@ -23,8 +24,9 @@
       <button
         class="me-avatar-btn"
         style="width:120rpx;height:120rpx;padding:0;margin:0;border:0;background:transparent;"
-        open-type="chooseAvatar"
-        bindchooseavatar="onChooseAvatar">
+        disabled="{{avatarUploading}}"
+        bindtap="onPickAvatar"
+        aria-label="更换头像">
         <image wx:if="{{userInfo.avatarUrl}}" class="me-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
         <view wx:else class="me-avatar me-avatar-empty">
           <text class="me-avatar-emoji">👗</text>
@@ -55,7 +57,7 @@
         </view>
       </block>
       <text class="me-id">ID: {{displayId}}</text>
-      <text class="me-hint">点头像可更换</text>
+      <text class="me-hint">{{avatarUploading ? '头像上传中…' : '点头像，从相册选择或拍照更换'}}</text>
     </view>
 
     <!-- 衣架卡（2026-09 第三版 · 用户定的）：整行一张浅透明白卡
@@ -76,9 +78,10 @@
 
   <!-- 菜单：圆形图标 + 标题/说明 + 箭头（照 money 的菜单样式） -->
   <view class="list me-menu">
+    <view wx:if="{{personalTryonVisible}}" class="me-item" bindtap="onPersonalTryon"><view class="me-icon">👕</view><view class="me-item-info"><text class="me-item-title">我的试穿 · 内测</text><text class="me-item-desc">个人照片 · 上身效果与记录</text></view><view class="chevron"></view></view>
 
-    <!-- 数据统计：仅管理员（userInfo.isAdmin 由后端登录/资料接口下发） -->
-    <view wx:if="{{userInfo.isAdmin}}" class="me-item" hover-class="me-item-active" bindtap="onStats">
+    <!-- 数据统计：开发版显示入口，其他版本仅管理员可见 -->
+    <view wx:if="{{isDevelop || userInfo.isAdmin}}" class="me-item" hover-class="me-item-active" bindtap="onStats">
       <view class="me-icon"><view class="me-ico ico-stats"></view></view>
       <view class="me-item-info">
         <text class="me-item-title">数据统计</text>

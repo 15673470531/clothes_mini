@@ -18,7 +18,7 @@
         class="ph-thumb {{index === cur ? 'ph-on' : ''}} {{item.done ? 'ph-done' : ''}}"
         bindtap="onPickThumb"
         data-i="{{index}}">
-        <image class="ph-thumb-img" src="{{item.path}}" mode="aspectFill"></image>
+        <image class="ph-thumb-img" src="{{item.path}}" mode="aspectFit"></image>
         <view wx:if="{{item.done}}" class="ph-tick">✓</view>
       </view>
     </scroll-view>
@@ -27,7 +27,7 @@
     <!-- photoSrc = 本地路径 || 远程地址：本地文件被系统清掉后还能显示云端那张，不至于以为照片丢了 -->
     <view wx:if="{{photoSrc}}" class="photo-row">
       <view class="photo-wrap">
-        <image class="photo-img" src="{{photoShow}}" mode="aspectFill"></image>
+        <image class="photo-img" src="{{photoShow}}" mode="aspectFit"></image>
       </view>
       <view class="photo-side">
         <!-- 二期图片上云后改口径：照片保存时会上传到云端（本机那份只是在，显示更快） -->
@@ -101,7 +101,7 @@
     <view class="more-head" bindtap="onToggleMore">
       <view class="more-left">
         <view class="more-title">更多属性</view>
-        <view class="more-sub">颜色 / 场合</view>
+        <view class="more-sub">颜色、场合、尺码等 · 选填</view>
       </view>
       <text class="sec-opt">{{moreSummary}}</text>
       <view class="chevron {{moreOpen ? 'chevron-open' : ''}}"></view>
@@ -134,6 +134,29 @@
           bindtap="onToggleOccasion"
           data-value="{{item.value}}">{{item.value}}</view>
       </view>
+
+      <view class="divider"></view>
+      <view class="label">衣物信息 · 选填</view>
+      <view class="detail-row">
+        <text class="detail-label">尺码</text>
+        <input class="detail-input" type="text" maxlength="24" value="{{details.size}}"
+          placeholder="如 M、165/88A、38码" placeholder-class="form-ph" data-key="size" bindinput="onDetailInput" />
+      </view>
+      <view class="detail-row">
+        <text class="detail-label">品牌</text>
+        <input class="detail-input" type="text" maxlength="64" value="{{details.brand}}"
+          placeholder="填写品牌名称" placeholder-class="form-ph" data-key="brand" bindinput="onDetailInput" />
+      </view>
+      <view class="detail-row">
+        <text class="detail-label">购买价格</text>
+        <input class="detail-input" type="digit" maxlength="10" value="{{details.price}}"
+          placeholder="人民币，按单件填写" placeholder-class="form-ph" data-key="price" bindinput="onDetailInput" />
+      </view>
+      <view class="detail-notes">
+        <view class="label">备注</view>
+        <textarea class="detail-textarea" maxlength="500" value="{{details.notes}}" data-key="notes"
+          placeholder="材质、洗护要求、购买渠道等" placeholder-class="form-ph" bindinput="onDetailInput" />
+      </view>
     </block>
   </view>
 
@@ -144,20 +167,33 @@
     </view>
     <view class="batch-info">
       <view class="batch-title">剩下 {{restCount}} 张都用这套属性</view>
-      <view class="batch-sub">品类 / 颜色 / 季节 / 场合照现在这套，一次全存下来</view>
+      <view class="batch-sub">品类、颜色、季节、场合及更多属性（含单件价格、备注）都会套用</view>
     </view>
   </view>
 
-  <!-- 洗白底（归一化 · 2026-09）：去掉背景杂物生成白底商品图；洗完由用户决定要不要拿它当封面。
-       后端开关关着（NORMALIZE_ENABLED=false）或者没照片时，整行不出现。 -->
-  <view wx:if="{{normalizeOn && photoSrc}}" class="wash-row" hover-class="pressed" bindtap="onNormalize">
-    <image wx:if="{{whiteUrl}}" class="wash-thumb" src="{{whiteUrl}}" mode="aspectFill" lazy-load></image>
-    <view class="wash-info">
-      <view class="wash-title">{{normEntryTitle}}</view>
-      <view class="wash-sub">{{normEntrySub}}</view>
+  <!-- 自动洗白底（2026-09 用户定：默认打开、保存后自动跑、洗好自动换封面）
+       ① 勾选行：这件要不要自动洗（默认开，用户可单独关掉某一件）
+       ② 说明行：用户要求"在选中洗白底这里说明一下" —— 会自动跑、每天几张、原图留着
+       ③ 状态行：排队中 / 生成中 / 已生成（点了看对比换封面）/ 失败（点了重试）
+       后端开关关着（NORMALIZE_ENABLED=false）或者没照片时整块不出现 -->
+  <view wx:if="{{normalizeOn && photoSrc}}" class="wash-box">
+    <view class="wash-row" hover-class="pressed" bindtap="onToggleAuto">
+      <view class="wash-info">
+        <view class="wash-title">{{normAutoTitle}}</view>
+        <view class="wash-sub">{{normAutoSub}}</view>
+      </view>
+      <view class="wash-sw {{autoWash ? 'wash-sw-on' : ''}}">
+        <view class="wash-knob"></view>
+      </view>
     </view>
-    <text class="wash-left">{{normLeftText}}</text>
-    <view class="chevron"></view>
+
+    <view class="wash-note">{{normNote}}</view>
+
+    <view wx:if="{{normStateText || whiteUrl}}" class="wash-state" hover-class="pressed" bindtap="onWashTap">
+      <image wx:if="{{whiteUrl}}" class="wash-thumb" src="{{whiteUrl}}" mode="aspectFit" lazy-load></image>
+      <text class="wash-state-t">{{normStateText}}</text>
+      <view class="chevron"></view>
+    </view>
   </view>
 
   <!-- 对比层：左原图 / 右白底图，用户点一下决定封面用哪张（不选也行，点空白处关掉） -->
@@ -179,8 +215,12 @@
         <view class="cmp-btn {{coverChoice === 'orig' ? 'cmp-btn-on' : ''}}" bindtap="onKeepOriginal">{{btnKeep}}</view>
         <view class="cmp-btn cmp-btn-main {{coverChoice === 'white' ? 'cmp-btn-on' : ''}}" bindtap="onUseWhite">{{btnUse}}</view>
       </view>
+      <!-- 手动重洗入口（2026-09 用户要保留）：不满意 / 自动失败时点它，force 跳过缓存真重洗一次 -->
+      <view class="cmp-regen" hover-class="pressed" bindtap="onRegenerate">{{btnRegen}}</view>
     </view>
   </view>
+
+  <view wx:if="{{personalTryonVisible && !isAdd}}" class="card pad" bindtap="onPersonalTryon">试穿这件 · 内测（仅上衣，使用已保存信息） ›</view>
 
   <!-- 删除：只在编辑已有衣物时出现。放底部栏上方单独一行，不做成第三个按钮（避免误点） -->
   <view wx:if="{{isEdit}}" class="del-row" bindtap="onDelete" hover-class="pressed">

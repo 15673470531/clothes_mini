@@ -1,43 +1,37 @@
 /* 衣橱页：只留本页布局，共用件走 app.wxss */
 
-.overview {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 24rpx 32rpx;
-}
-
-.ov-left {
-  display: flex;
-  align-items: baseline;
-  gap: 12rpx;
-}
-
-/* 右侧小插画：**做小一点**（2026-09 用户：别把卡片高度顶起来）。
-   210rpx 宽 × 2.13 比例 ≈ 99rpx 高，跟数字那一行的行高基本齐平 */
-.ov-pic {
-  width: 210rpx;
-  flex: 0 0 auto;
-}
-
-.ov-num {
-  font-size: var(--fs-page);
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.5rpx;
-  /* 数字等宽，件数变化时不会左右跳 */
-  font-variant-numeric: tabular-nums;
-}
-
-.ov-label {
-  font-size: var(--fs-sub);
-  color: var(--text-weak);
-}
-
-/* 品类筛选：横向滚动不换行（.cats / .cat 本体在 app.wxss） */
+/* 分类直接作为页首，不再用装饰卡片占用图片墙空间。 */
 .cats {
-  margin: 24rpx 0 16rpx;
+  margin: 0 0 12rpx;
+}
+
+.cat {
+  padding: 14rpx 24rpx;
+  margin-right: 12rpx;
+  color: var(--text-sub);
+}
+
+.cat.tag-on {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* 白底图生成中那行总提示（2026-09 方案 6）：浅紫底 + 主题字，跟普通统计行区分开 */
+.normalize-note {
+  margin: 0 0 20rpx;
+  padding: 18rpx 24rpx;
+  border-radius: 18rpx;
+  background: var(--brand-light);
+  color: var(--brand);
+  font-size: var(--fs-sub);
+}
+
+.result-count {
+  margin: 4rpx 4rpx 16rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-weak);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---- 二级类目条 ----
@@ -49,7 +43,14 @@
  * 照 .cell 默认渲染的话未选中看不见、选中的却带一圈描边，一行里像两种控件。
  */
 .subs {
-  margin-bottom: 16rpx;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+}
+
+.subs .cell {
+  height: 56rpx;
+  font-size: var(--fs-tiny);
+  border-radius: var(--r-pill);
 }
 
 .subs .cell:not(.on) {
@@ -86,10 +87,6 @@
   background: rgba(0, 0, 0, 0.45);
 }
 
-/* 已上传到对象存储 */
-.pend-oss {
-  background: var(--success);
-}
 
 /* 已上传到服务器本地盘（没配 OSS 时的兜底） */
 .pend-local {
@@ -97,5 +94,35 @@
 }
 
 
-/* 空态插画（后端下发的透明底图；拿不到图就不渲染，只剩文字） */
-.empty-pic-wd { width: 400rpx; }
+/* 新版透明底插画：缩小体量，给说明与添加按钮留出空间。 */
+.empty-pic-wd { width: 320rpx; margin-bottom: 20rpx; }
+
+/* 三列卡片的操作入口与名称并排，独立响应点击。 */
+.item-caption { display: flex; align-items: center; gap: 4rpx; margin-top: 4rpx; }
+.item-caption .wall-text { flex: 1; min-width: 0; margin-top: 0; text-align: left; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.5; overflow: hidden; word-break: break-all; }
+.item-more {
+  width: 64rpx; height: 64rpx; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--r-pill); color: var(--text-sub); font-size: var(--fs-strong);
+}
+.item-more-pressed { background: var(--fill); }
+
+/* 完整展示照片时用白底补齐比例差，避免两侧或上下露灰边。 */
+.wall-media image.wall-pic {
+  background: #fff;
+  border-radius: 16rpx;
+}
+
+.login-empty { padding-top: 64rpx; }
+.login-title { display: block; margin-bottom: 12rpx; color: var(--text); font-size: var(--fs-strong); font-weight: 600; }
+
+/* 与穿搭页统一空态节奏，空衣橱只提供一个主要操作。 */
+.wardrobe-empty { padding: 52rpx 24rpx 72rpx; }
+.wardrobe-empty .empty-img, .login-empty .empty-img { margin-bottom: 28rpx; }
+.wardrobe-empty-title { display: block; color: var(--text); font-size: var(--fs-strong); font-weight: 600; line-height: 1.5; }
+.wardrobe-empty-desc { margin-top: 14rpx; font-size: var(--fs-sub); line-height: 1.8; }
+.wardrobe-empty-hint { display: block; margin-top: 8rpx; font-size: var(--fs-tiny); color: var(--text-weak); }
+.wardrobe-filter-empty { padding: 96rpx 24rpx; }
+.pending-notice { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; padding: 20rpx 24rpx; margin-bottom: 20rpx; border-radius: 16rpx; background: var(--fill); color: var(--text-sub); font-size: var(--fs-tiny); }
+.pending-link { flex-shrink: 0; color: var(--brand); font-weight: 500; }
+.item-caption { min-height: 72rpx; }

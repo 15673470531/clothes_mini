@@ -16,7 +16,8 @@
     "pages/admin/stats/stats",
     "pages/admin/users/users",
     "pages/admin/user-items/user-items",
-    "pages/admin/user-outfits/user-outfits"
+    "pages/admin/user-outfits/user-outfits",
+    "pages/personal-tryon/personal-tryon"
   ],
   "window": {
     "navigationBarBackgroundColor": "#fbf8f4",

@@ -1,9 +1,9 @@
 <view class="page page-with-tab">
+  <view wx:if="{{!loggedIn}}" class="guest-note">游客浏览 · 登录后可保存并同步自己的衣橱和穿搭</view>
 
-  <!-- 场合分类（筛选行）。
-       2026-09：这里原来放过一个「试穿 ›」胶囊进 2D 人台 demo，人台已删除，
-       AI 试穿改在搭配预览页底部（pages/tryon），筛选行恢复成单纯的筛选。 -->
-  <scroll-view class="cats" scroll-x>
+
+  <!-- 有搭配时才展示场合筛选；空衣橱保留单一引导入口。 -->
+  <scroll-view wx:if="{{total > 0 || !loggedIn}}" class="cats" scroll-x>
     <view
       wx:for="{{occChips}}"
       wx:key="key"
@@ -12,7 +12,15 @@
       data-key="{{item.key}}">{{item.name}}</view>
   </scroll-view>
 
-  <!-- 3 列缩略图：点进预览页，长按删除 -->
+  <view wx:if="{{total > 0}}" class="result-count">
+    {{occKey ? '当前场合 ' + outfits.length + ' 套 · 共 ' + total + ' 套' : '共 ' + total + ' 套'}}
+  </view>
+
+  <!-- 2 列缩略图：点击查看大图，长按打开更多操作 -->
+  <view wx:if="{{syncError && outfits.length}}" class="sync-note">
+    <text>暂时无法同步，当前显示已缓存内容</text>
+    <view class="sync-retry" bindtap="onRetrySync">重试</view>
+  </view>
   <view wx:if="{{outfits.length}}" class="wall oc-wall">
     <view
       wx:for="{{outfits}}"
@@ -25,30 +33,63 @@
 
       <view class="oc-pic">
         <!-- 正式图片：预览页点完成时生成的方图 -->
-        <image wx:if="{{item.photo}}" class="wall-pic" src="{{item.photo}}" mode="aspectFill"></image>
-        <!-- 还没生成图片：用这套里第一件衣物顶着 -->
-        <block wx:else>
-          <image wx:if="{{item.thumb.image}}" class="wall-pic" src="{{item.thumb.image}}" mode="aspectFill"></image>
-          <view wx:else class="wall-pic wall-ph {{item.thumb.light ? 'thumb-light' : ''}}" style="background:{{item.thumb.color}}">
-            <text class="thumb-emoji">{{item.thumb.emoji}}</text>
+        <image wx:if="{{item.photo}}" class="wall-pic" src="{{item.photo}}" mode="aspectFit" lazy-load binderror="onListImageError" data-id="{{item.id}}" data-src="{{item.photo}}"></image>
+        <!-- 无封面或封面加载失败时，直接展示衣物拼图，无需生成或上传图片。 -->
+        <view wx:elif="{{item.tiles.length}}" class="oc-collage oc-cols-{{item.tileColumns}}">
+          <view wx:for="{{item.tiles}}" wx:for-item="tile" wx:key="id" class="oc-tile">
+            <image wx:if="{{tile.image}}" class="oc-tile-image" src="{{tile.image}}" mode="aspectFit" lazy-load
+              binderror="onTileImageError" data-id="{{item.id}}" data-item-id="{{tile.id}}" data-src="{{tile.image}}"></image>
+            <view wx:else class="oc-tile-placeholder" style="background:{{tile.color}}">
+              <text>{{tile.emoji}}</text>
+            </view>
           </view>
-        </block>
+        </view>
+        <view wx:else class="wall-pic oc-no-items">
+          <text class="oc-no-items-title">衣物已不在衣橱</text>
+          <text>从更多菜单重新选择</text>
+        </view>
         <!-- 角标：件数 / 缺N（右上角） -->
-        <view class="oc-badge {{item.badgeWarn ? 'oc-badge-warn' : ''}}">{{item.badge}}</view>
-        <!-- 右下角小圆点：封面存哪了（绿=OSS / 黄=服务器本地盘），跟右上角件数角标错开 -->
+        <view wx:if="{{item.badgeWarn}}" class="oc-badge oc-badge-warn">{{item.badge}}</view>
+        <!-- 右下角小圆点：封面存哪了（灰=尚未上传成功 / 黄=服务器本地盘，OSS 成功不显示），跟右上角件数角标错开 -->
         <view wx:if="{{item.coverBadgeKind}}" class="oc-store oc-store-{{item.coverBadgeKind}}"></view>
       </view>
 
-      <view class="wall-text">{{item.name}}</view>
+      <view class="oc-info">
+        <view class="oc-title-row">
+          <view class="wall-text">{{item.name}}</view>
+          <view class="oc-more" catchtap="onMoreOutfit" catchlongpress="noop"
+            data-id="{{item.id}}" data-name="{{item.name}}"
+            hover-class="oc-more-pressed" aria-label="更多操作" role="button">···</view>
+        </view>
+        <view class="oc-meta">{{item.meta}}</view>
+      </view>
     </view>
   </view>
 
-  <view wx:else class="empty">
-    <image wx:if="{{emptyReal && emptyPic}}" class="empty-img empty-pic-ot"
-      src="{{emptyPic}}" mode="widthFix" lazy-load binderror="onEmptyPicErr"></image>
-    <text class="empty-text">{{emptyText}}</text>
+  <view wx:elif="{{syncing}}" class="empty">
+    <text class="empty-title">正在加载搭配…</text>
+    <text class="empty-text">请稍等一下</text>
+  </view>
+  <view wx:elif="{{syncError}}" class="empty">
+    <text class="empty-title">暂时加载不了</text>
+    <text class="empty-text">请检查网络后再试一次</text>
+    <view class="empty-action" hover-class="pressed" bindtap="onRetrySync">重新加载</view>
+  </view>
+  <view wx:elif="{{emptyReal}}" class="empty outfit-empty">
+    <image wx:if="{{emptyPic}}" class="empty-img empty-pic-ot"
+      src="{{emptyPic}}" mode="widthFix" binderror="onEmptyPicErr"></image>
+    <text class="outfit-empty-title">{{(!loggedIn || hasClothes) ? '把喜欢的衣服，搭成一套' : '第一套搭配，从衣橱开始'}}</text>
+    <text class="empty-text outfit-empty-desc">{{(!loggedIn || hasClothes) ? '从衣橱挑选单品，保存你的日常穿搭' : '先添加几件衣物，再组合属于你的日常穿搭'}}</text>
+    <view class="empty-action" hover-class="pressed" bindtap="onEmptyAction">{{(!loggedIn || hasClothes) ? '新建第一套搭配' : '去添加衣物'}}</view>
+  </view>
+  <view wx:else class="empty outfit-filter-empty">
+    <text class="outfit-empty-title">还没有{{occKey}}搭配</text>
+    <text class="empty-text outfit-empty-desc">换个场合，看看已经保存的搭配</text>
+    <view class="empty-action" hover-class="pressed" bindtap="onViewAll">查看全部</view>
   </view>
 
+  <canvas type="2d" id="shot-canvas" class="preview-canvas"></canvas>
   <view class="gap"></view>
-  <view class="fab" bindtap="onAdd">＋</view>
+  <view wx:if="{{total > 0}}" class="fab" bindtap="onAdd" role="button" aria-label="新建搭配">＋</view>
+
 </view>

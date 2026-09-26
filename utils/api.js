@@ -31,6 +31,7 @@ function request(url, method = 'GET', data = {}, options = {}) {
       url: app.globalData.baseUrl + url,
       method,
       data,
+      ...(options.timeout ? { timeout: options.timeout } : {}),
       header: {
         'content-type': 'application/json',
         'Accept': 'application/json',
@@ -70,19 +71,18 @@ function request(url, method = 'GET', data = {}, options = {}) {
 function login(nickName = '') {
   return new Promise((resolve, reject) => {
     wx.login({
+      timeout: 10000,
       success(res) {
         if (!res.code) {
           reject(new Error('wx.login 没拿到 code'))
           return
         }
-        // 开发者工具里 wx.login 会给一个 32 位的假 code：后端换不到 openid，本地环境会降级走
-        // devLogin —— 而 devLogin 是按 code 的 md5 建 openid 的，于是**每点一次登录就多一个用户**，
-        // 「我的」页显示的 ID 每次都不一样。所以工具里固定用 'dev_local'，反复登录都落在同一个开发账号。
-        // 判断环境只能看 platform（不能只看 code 长度：工具里的 code 同样是 32 位）。
-        // 真机：正常走 code2session（本地没配 AppSecret 时会降级 devLogin，配了就正常）
-        const isDevtools = (wx.getSystemInfoSync() || {}).platform === 'devtools'
-        const code = isDevtools ? 'dev_local' : res.code
-        request('/user/login', 'POST', { code, nickName }, { silent: true }).then((data) => {
+        // 仅开发者工具连接回环地址时使用测试账号；线上始终使用微信 code。
+        let isDevtools = false
+        try { isDevtools = (wx.getSystemInfoSync() || {}).platform === 'devtools' } catch (e) {}
+        const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(app.globalData.baseUrl)
+        const code = isDevtools && isLocal ? 'dev_local' : res.code
+        request('/user/login', 'POST', { code, nickName }, { silent: true, timeout: 15000 }).then((data) => {
           wx.setStorageSync('token', data.token)
           wx.setStorageSync('openid', data.openid)
           wx.setStorageSync('userInfo', {
@@ -92,6 +92,7 @@ function login(nickName = '') {
             avatarUrl: data.avatarUrl || '',
             isAdmin: !!data.isAdmin
           })
+          require('./usage.js').track('login_success', 'mine')
           resolve(data)
         }).catch(reject)
       },
@@ -196,14 +197,15 @@ module.exports = {
           url: app.globalData.baseUrl + '/user/avatar',
           filePath,
           name: 'file',
-          header: { 'Authorization': 'Bearer ' + (wx.getStorageSync('token') || '') },
+          timeout: 20000,
+          header: { Accept: 'application/json', 'Authorization': 'Bearer ' + (wx.getStorageSync('token') || '') },
           success(res) {
             let body = {}
             try { body = JSON.parse(res.data || '{}') } catch (e) { body = {} }
-            if (res.statusCode >= 200 && res.statusCode < 300 && body.code === 0) {
+            if (res.statusCode >= 200 && res.statusCode < 300 && body.code === 0 && body.data && body.data.avatarUrl) {
               resolve(body.data.avatarUrl)
             } else {
-              reject(body && body.msg ? body : { msg: '头像上传失败' })
+              reject({ msg: body.msg || body.message || (res.statusCode === 401 ? '登录已失效，请重新登录后更换头像' : '头像上传失败（HTTP ' + res.statusCode + '）') })
             }
           },
           fail: reject,
@@ -240,9 +242,11 @@ module.exports = {
      * @param {string} itemId   已有衣物的 id；新增流程里还没保存，传空串
      * @param {string} imageUrl 要洗的原图（**必须是云端 https 地址**，本机照片要先传）
      */
-    normalize(itemId, imageUrl) {
-      return request('/items/normalize', 'POST', { itemId: itemId || '', imageUrl }, {})
-    }
+    /** 洗白底（同步，15~20 秒）；force = 用户点「重新生成一张」→ 跳过缓存真重洗 */
+  normalize(itemId, imageUrl, force) {
+    return request('/items/normalize', 'POST',
+      { itemId: itemId || '', imageUrl, force: !!force }, {})
+  }
   },
 
   /**

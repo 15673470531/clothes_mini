@@ -24,7 +24,7 @@ const { CELL_COUNT } = require('./outfit-layout.js')
 
 /** 画布宽度（逻辑像素）与排版常量 */
 const BOX = 375
-const PAD = 15
+const PAD = 10
 const DPR = 2
 
 /** 品类尺寸权重：主体 1.0、鞋 0.62、配饰 0.50（小件别占那么大） */
@@ -35,7 +35,7 @@ const CELL_RC = [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1], [0, 2], [1, 2],
 
 /** 排版内部用的「大件格子边长」基准（最后会按画布缩放，随便取） */
 const B = 100
-const GAP = B * 0.08          // 件与件之间的间距
+const GAP = B * 0.025          // 件与件之间的间距
 
 /** 是不是小件（要缩小并贴靠的） */
 function isSmall(cat) {
@@ -90,18 +90,32 @@ function buildSpots(entries) {
   const byRow = {}
   bigs.forEach(e => { (byRow[e.row] = byRow[e.row] || []).push(e) })
   const usedRows = [0, 1, 2].filter(r => byRow[r] && byRow[r].length)
-  const colShift = bigs.some(e => e.col === 0) ? 0 : -1   // 左栏全空 → 右栏顶上来
-
+  // 图片按真实宽高占位，避免长裤等窄图仍占用整个正方形。
+  const dimensions = (item, side) => {
+    const ratio = item.imageWidth > 0 && item.imageHeight > 0 ? item.imageWidth / item.imageHeight : 1
+    return { w: ratio < 1 ? side * ratio : side, h: ratio < 1 ? side : side / ratio }
+  }
+  const usedCols = [...new Set(bigs.map(e => e.col))].sort((a, b) => a - b)
+  const colWidths = {}
+  const rowHeights = {}
+  bigs.forEach(e => {
+    const d = dimensions(e.item, B)
+    colWidths[e.col] = Math.max(colWidths[e.col] || 0, d.w)
+    rowHeights[e.row] = Math.max(rowHeights[e.row] || 0, d.h)
+  })
   const placed = {}
   const anchorOf = {}
-  usedRows.forEach((r, ri) => {
+  let y = 0
+  usedRows.forEach(r => {
     byRow[r].forEach(e => {
-      const col = Math.max(0, e.col + (e.col > 0 ? colShift : 0))
-      const sp = { item: e.item, x: col * (B + GAP), y: ri * (B + GAP), w: B, h: B }
+      const d = dimensions(e.item, B)
+      const x = usedCols.slice(0, usedCols.indexOf(e.col)).reduce((sum, col) => sum + colWidths[col] + GAP, 0)
+      const sp = { item: e.item, x: x + (colWidths[e.col] - d.w) / 2, y, w: d.w, h: d.h }
       spots.push(sp)
       placed[e.item.id] = sp
       anchorOf[e.item.id] = r
     })
+    y += rowHeights[r] + GAP
   })
 
   // 只有小件、一件大件都没有：小件退回普通网格（但保持各自权重）
@@ -133,7 +147,7 @@ function buildSpots(entries) {
   // ---- 2) 鞋：放在「下装」正下方（同列居中、留 GAP），不压任何衣物 ----
   // 多只鞋并排：整组宽度不超下装宽（超了就按上限反算再缩一点），保证整齐地待在裤子下面
   let sw = size('shoes')
-  const sgK = 0.08
+  const sgK = 0.04
   if (shoes.length) {
     const need = shoes.length * sw + (shoes.length - 1) * sw * sgK
     if (need > anchor.w) sw = anchor.w / (shoes.length + (shoes.length - 1) * sgK)
@@ -150,7 +164,7 @@ function buildSpots(entries) {
 
   // ---- 3) 配饰：围绕「上装」放 —— 上装那一行的右侧、与上装垂直居中（多个上下排一列），不覆盖 ----
   const aw = size('acc')
-  const ag = aw * 0.10
+  const ag = aw * 0.06
   const accsH = accs.length ? accs.length * aw + (accs.length - 1) * ag : 0
   // 上装优先；没有上装就用外套、再没有就用第一件大件
   let topEntry = null
@@ -191,6 +205,30 @@ function hitsAny(x, y, w, h, spots) {
 /** 归一化到内容左上角（0,0）并给出内容宽高 */
 function finish(spots) {
   if (!spots.length) return { spots: [], bw: 0, bh: 0 }
+  // 鞋与配饰也按实际图片比例占位，不再在正方形中上下居中留空。
+  spots.forEach(s => {
+    const t = s.item
+    if (!(t.imageWidth > 0 && t.imageHeight > 0)) return
+    const k = Math.min(s.w / t.imageWidth, s.h / t.imageHeight)
+    const w = t.imageWidth * k
+    const h = t.imageHeight * k
+    s.x += (s.w - w) / 2
+    s.w = w
+    s.h = h
+  })
+  // 逐列向上收紧：只需避让横向有交集的衣物，不被相邻列的高衣物撑出空行。
+  const ordered = spots.slice().sort((a, b) => a.y - b.y || a.x - b.x)
+  const packed = []
+  ordered.forEach(s => {
+    let top = 0
+    packed.forEach(prev => {
+      if (s.x < prev.x + prev.w && prev.x < s.x + s.w) {
+        top = Math.max(top, prev.y + prev.h + GAP)
+      }
+    })
+    s.y = top
+    packed.push(s)
+  })
   const x0 = Math.min.apply(null, spots.map(s => s.x))
   const y0 = Math.min.apply(null, spots.map(s => s.y))
   const x1 = Math.max.apply(null, spots.map(s => s.x + s.w))
@@ -208,7 +246,7 @@ function planFor(entries, kind) {
   const inner = BOX - 2 * PAD
   const k = kind === 'album' ? inner / bw : inner / Math.max(bw, bh)
   const w = BOX
-  const h = kind === 'album' ? Math.max(BOX, Math.round(2 * PAD + bh * k)) : BOX
+  const h = kind === 'album' ? Math.ceil(2 * PAD + bh * k) : BOX
   const dx = (w - bw * k) / 2
   const dy = (h - bh * k) / 2
   return {
@@ -262,10 +300,8 @@ function drawTile(canvas, ctx, t, s, done) {
   if (!img) return fallback()
 
   img.onload = () => {
-    drawBlock(ctx, t, s)                                  // 先铺底色，照片四周才不是白边
+    // 有照片时直接绘制，透出整张画布的白底，不铺色块或品类图标。
     ctx.save()
-    roundRect(ctx, s.x, s.y, s.w, s.h, r)
-    ctx.clip()
     const scale = Math.min(s.w / img.width, s.h / img.height)   // 整件装进去，不裁
     const w = img.width * scale
     const h = img.height * scale
@@ -302,8 +338,18 @@ function shoot(page, opts, done) {
   const kind = o.kind || 'cover'
   const destPath = o.destPath || ''
   const entries = entriesOf(o.items, o.slots)
-  const plan = planFor(entries, kind)
-
+  // 只读取尺寸，不改原图；读取失败按原来的方形占位兜底。
+  Promise.all(entries.map(e => new Promise(resolve => {
+    if (!e.item.image) return resolve(e)
+    wx.getImageInfo({
+      src: e.item.image,
+      success: info => resolve(Object.assign({}, e, { item: Object.assign({}, e.item, {
+        image: info.path || e.item.image, imageWidth: info.width, imageHeight: info.height
+      }) })),
+      fail: () => resolve(e)
+    })
+  }))).then(measured => {
+  const plan = planFor(measured, kind)
   wx.createSelectorQuery()
     .in(page)
     .select('#shot-canvas')
@@ -339,6 +385,7 @@ function shoot(page, opts, done) {
         })
       })
     })
+  })
 }
 
 module.exports = { BOX, PAD, DPR, WEIGHT, CELL_RC, entriesOf, buildSpots, planFor, shoot, overlapRect }

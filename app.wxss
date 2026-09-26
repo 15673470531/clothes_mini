@@ -19,7 +19,8 @@ page {
 
   --bg: #FBF8F4;           /* 暖白 */
   --card: #FFFFFF;
-  --shadow: 0 6rpx 28rpx rgba(74, 58, 92, 0.10);
+  --shadow: 0 3rpx 16rpx rgba(74, 58, 92, 0.045);
+  --image-bg: #F7F5F2;
   --shadow-up: 0 -6rpx 24rpx rgba(74, 58, 92, 0.05);
 
   --text: #221E2A;
@@ -113,7 +114,7 @@ button {
 .btn-primary {
   background: var(--brand-grad);
   color: #ffffff;
-  box-shadow: 0 12rpx 28rpx rgba(93, 76, 124, 0.28);
+  box-shadow: 0 6rpx 16rpx rgba(93, 76, 124, 0.16);
 }
 
 /* 组合态：hover-class 只写 "pressed"
@@ -301,7 +302,7 @@ button {
 
 .wall-cell {
   width: calc((100% - 32rpx) / 3);
-  /* 照片还没上传时的角标要贴着格子右下角定位 */
+  /* 格子作为列表项定位容器；图片角标使用 .wall-media。 */
   position: relative;
 }
 
@@ -309,7 +310,7 @@ button {
   width: 100%;
   height: 223rpx;
   border-radius: 20rpx;
-  background: var(--fill);
+  background: var(--image-bg);
   display: block;
 }
 
@@ -321,7 +322,7 @@ button {
 }
 
 .wall-text {
-  margin-top: 10rpx;
+  margin-top: 12rpx;
   font-size: var(--fs-tiny);
   color: var(--text-sub);
   text-align: center;
@@ -588,7 +589,8 @@ button {
 /* 卡内小标签（12px 灰字，替代原来的大标题） */
 .label {
   font-size: var(--fs-tiny);
-  color: var(--text-weak);
+  font-weight: 500;
+  color: var(--text-sub);
   margin-bottom: 16rpx;
 }
 
@@ -600,3 +602,39 @@ button {
 }
 
 /* 品类胶囊已改为等宽格（.cell / .col3），.chip-cat 不再需要 */
+
+/* 图片角标只相对图片定位，名称不参与。 */
+.wall-media { position: relative; }
+
+/* 列表同步状态：有缓存时保留内容，没有缓存时显示独立状态。 */
+.sync-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin: 16rpx 0;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: var(--brand-light);
+  color: var(--text-sub);
+  font-size: var(--fs-tiny);
+}
+.sync-retry { color: var(--brand); font-weight: 600; flex-shrink: 0; }
+.empty-title { display: block; color: var(--text-sub); font-weight: 500; margin-bottom: 12rpx; }
+.empty-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80rpx;
+  margin-top: 28rpx;
+  padding: 0 36rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand-light);
+  color: var(--brand);
+  font-size: var(--fs-sub);
+  font-weight: 500;
+}
+.empty-action.pressed { opacity: 0.7; }
+
+/* 游客可浏览页面，只有个人记录操作才需要登录。 */
+.guest-note { margin: 0 0 20rpx; padding: 16rpx 20rpx; border-radius: 12rpx; background: var(--fill); color: var(--text-weak); font-size: var(--fs-tiny); line-height: 1.6; }

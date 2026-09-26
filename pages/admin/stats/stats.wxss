@@ -104,3 +104,14 @@
 .tip-err {
   color: var(--danger);
 }
+
+.usage-tabs { display: flex; gap: 16rpx; margin: 24rpx 0; }
+.usage-step { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; padding: 16rpx 0; font-size: var(--fs-sub); border-bottom: 1rpx solid var(--line); }
+.usage-label { flex: 1; min-width: 0; }
+.usage-count { font-weight: 600; color: var(--brand); }
+.usage-rate { width: 88rpx; text-align: right; color: var(--text-weak); }
+.usage-heading { margin-top: 32rpx; font-size: var(--fs-sub); font-weight: 600; }
+.usage-detail { display: block; color: var(--text-weak); font-size: var(--fs-tiny); }
+.usage-visit { padding: 12rpx 0; border-bottom: 1rpx solid var(--line); }
+.usage-timeline { margin: 20rpx 0 12rpx 12rpx; padding-left: 24rpx; border-left: 3rpx solid var(--brand-light); }
+.usage-event { margin-bottom: 20rpx; font-size: var(--fs-sub); }

@@ -2,26 +2,32 @@
  * 数据统计（2026-09，仅管理员）
  *
  * 从「我的 → 数据统计」进来（这条菜单只有管理员渲染）。
- * 页面只做一件事：把后端下发的 groups 渲染成卡片，点卡片跳用户列表带筛选参数。
- * **口径全在后端**（AdminController::stats），这里不自己算数、也不写死有哪些指标——
- * 以后加一个统计分组只改后端，这个页面不用动。
+ * 基础指标由后端 groups 驱动；行为观察独立加载，支持时间范围和访问时间线。
+ * 统计口径在后端，页面仅渲染。
  */
 const api = require('../../../utils/api.js')
 
 Page({
   data: {
     groups: [],
+    usage: null,
+    usageDays: 7,
+    usageLoading: false,
+    usageError: '',
+    expandedVisit: '',
+    dayOptions: [1, 7, 30],
     loading: true,
     error: ''
   },
 
   onShow() {
     this.load()
+    this.loadUsage()
   },
 
   /** 下拉刷新（统计数字要手查，给个手动刷新的入口） */
   onPullDownRefresh() {
-    this.load().then(() => wx.stopPullDownRefresh())
+    Promise.all([this.load(), this.loadUsage()]).then(() => wx.stopPullDownRefresh())
   },
 
   load() {
@@ -34,6 +40,29 @@ Page({
         // 401 时 api 层已清 token；403（非管理员）就把后端的话原样显示
         this.setData({ loading: false, error: (err && err.msg) || '加载失败' })
       })
+  },
+
+  loadUsage() {
+    const days = this.data.usageDays
+    const requestId = this._usageRequest = (this._usageRequest || 0) + 1
+    this.setData({ usageLoading: true, usageError: '' })
+    return api.request('/admin/usage', 'GET', { days }, { silent: true }).then(usage => {
+      if (requestId !== this._usageRequest) return
+      this.setData({ usage, usageLoading: false })
+    }).catch(err => {
+      if (requestId !== this._usageRequest) return
+      this.setData({ usageLoading: false, usageError: err && err.msg || '行为统计加载失败' })
+    })
+  },
+
+  onUsageDays(e) {
+    this.setData({ usageDays: Number(e.currentTarget.dataset.days), expandedVisit: '', usage: null })
+    this.loadUsage()
+  },
+
+  onVisit(e) {
+    const key = e.currentTarget.dataset.key
+    this.setData({ expandedVisit: this.data.expandedVisit === key ? '' : key })
   },
 
   /**

@@ -108,7 +108,7 @@
   margin-top: 16rpx;
 }
 
-/* 四个点的尺寸/白圈/阴影跟衣橱里那颗保持一模一样，用户能对上号 */
+/* 图例点的尺寸/白圈/阴影跟衣橱里那颗保持一模一样，用户能对上号 */
 .lg-dot {
   flex: 0 0 auto;
   margin-top: 9rpx;   /* 首行行高 24×1.6=38.4rpx，点连边框 20rpx，补 9rpx 正好垂直居中 */
@@ -121,7 +121,6 @@
 }
 
 .lg-wait  { background: rgba(0, 0, 0, 0.45); }
-.lg-oss   { background: var(--success); }
 .lg-local { background: var(--warning); }
 
 /* 「没有点」用一个空心圈表示：有形状但没颜色，比画个灰点更准确 */

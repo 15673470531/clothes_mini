@@ -64,6 +64,10 @@
   <view class="card sec">
     <view class="sec-title">数据与账号</view>
     <view class="feat">
+      <text class="feat-name">使用体验统计</text>
+      <text class="feat-desc">记录登录后添加衣物的操作步骤、结果和耗时，用于改善体验。统计不采集照片、输入内容或备注，明细保留 30 天，仅管理员可查看。</text>
+    </view>
+    <view class="feat">
       <text class="feat-name">数据在云端</text>
       <text class="feat-desc">登录之后，衣橱、搭配、日历都存在服务器上，换手机登录同一个账号就能看到。</text>
     </view>
@@ -75,17 +79,12 @@
     <!-- 小圆点图例：给颜色不写字的标记，得有个地方说明白，否则看不懂 -->
     <view class="feat">
       <text class="feat-name">照片存在哪</text>
-      <text class="feat-desc">衣橱格子和穿搭卡片右下角有个小圆点，意思是这张照片存在哪：</text>
+      <text class="feat-desc">成功上传到 OSS 的照片不显示圆点；只有尚未上传成功或存到备用位置时才显示：</text>
       <view class="legend">
         <view class="lg-row">
           <view class="lg-dot lg-wait"></view>
           <text class="lg-name">灰点</text>
-          <text class="lg-desc">照片还在手机里，正在后台上传，不影响用</text>
-        </view>
-        <view class="lg-row">
-          <view class="lg-dot lg-oss"></view>
-          <text class="lg-name">绿点</text>
-          <text class="lg-desc">照片已存到云存储，换手机也能看到</text>
+          <text class="lg-desc">照片仅在本机，尚未上传成功（可能待上传或上传失败）</text>
         </view>
         <view class="lg-row">
           <view class="lg-dot lg-local"></view>
@@ -95,7 +94,7 @@
         <view class="lg-row">
           <view class="lg-dot lg-none"></view>
           <text class="lg-name">没有点</text>
-          <text class="lg-desc">这张没有照片，或者不用提醒</text>
+          <text class="lg-desc">照片已上传到 OSS，或当前没有照片，无需提醒</text>
         </view>
       </view>
     </view>

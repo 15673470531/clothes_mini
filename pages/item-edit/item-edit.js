@@ -1,3 +1,4 @@
+const personalTryon = require('../../utils/personal-tryon.js')
 /**
  * 记录衣物 / 编辑衣物
  *
@@ -29,6 +30,7 @@
  *    保存时直接复用，避免二次上传产生新 key（那样"白底图对应哪张原图"就对不上了）
  */
 
+const usage = require('../../utils/usage.js')
 const store = require('../../utils/store.js')
 const mock = require('../../utils/mock.js')
 const cloud = require('../../utils/cloud.js')
@@ -38,10 +40,12 @@ const T = require('../../utils/texts.js')
 
 Page({
   data: {
+    personalTryonVisible: false,
     isEdit: false,
     isAdd: true,
     id: '',
     name: '',
+    details: { size: '', brand: '', price: '', notes: '' },
     cats: [],            // [{ key, name, on }]
     subs: [],            // 二级类目 [{ key, name, on }]；没选一级品类时为空 → 不显示
     colors: [],          // [{ key, name, hex, on }]
@@ -56,6 +60,14 @@ Page({
     normalizeOn: false,     // 后端开关（关着整块入口不显示）
     normalizeLeft: 0,       // 今天还能洗几次
     normalizeUnlimited: false,  // 管理员：不限次数（后端下发，前端不再拦人）
+    normalizeDaily: 0,      // 每天几张（后端下发；说明文案里的数字用它，前端不写死）
+    autoWash: true,         // 这件要不要自动洗（2026-09：默认开，用户可单独关掉）
+    normalizeStatus: '',    // 后端给的自动流程状态：''/queued/running/done/failed/skipped
+    normAutoTitle: '',
+    normAutoSub: '',
+    normNote: '',
+    normStateText: '',
+    btnRegen: '',
     whiteUrl: '',           // 这件衣物的白底图（云端地址）
     origUrl: '',            // 原图的云端地址（对比和切回都靠它）
     origUrlFor: '',         // 上面这个地址对应的是哪张照片（本机路径 / 云端地址）
@@ -69,9 +81,6 @@ Page({
     labelWhite: '',
     btnKeep: '',
     btnUse: '',
-    normEntryTitle: '',
-    normEntrySub: '',
-    normLeftText: '',
 
     moreOpen: false,     // 「更多属性」（颜色 / 场合）默认折叠
     moreSummary: '',     // 折叠时右侧显示已选摘要，不用展开也能看到
@@ -83,6 +92,23 @@ Page({
     queueText: '',       // 「已录 2 / 9 张，点缩略图切换」（只有一批多于一张才显示）
     restCount: 0,        // 这一批里其它还没录的张数（「剩下 N 张都用这套属性」用）
     batchSame: false     // 「剩下几张都用这套属性」
+  },
+
+  onPersonalTryon() { personalTryon.open('?itemId=' + encodeURIComponent(this.data.id)) },
+
+  onShow() {
+    personalTryon.visibility(this)
+    if (!this.data.isAdd) return
+    this._activeAt = Date.now()
+    if (!this._trackedOpen) { usage.track('edit_open', 'item-edit'); this._trackedOpen = true }
+  },
+
+  onHide() { this.trackActiveTime() },
+  onUnload() { this.trackActiveTime(); usage.flush() },
+  trackActiveTime() {
+    if (!this._activeAt) return
+    usage.track('page_active', 'item-edit', { duration: Date.now() - this._activeAt })
+    this._activeAt = 0
   },
 
   onLoad(options) {
@@ -124,6 +150,7 @@ Page({
       isAdd: !item,
       id: item ? item.id : '',
       name: item ? (item.name || '') : '',
+      details: Object.assign({ size: '', brand: '', price: '', notes: '' }, item && item.details || {}),
       cats,
       // 编辑已有衣物时按其一级品类展开二级；新增时先空着（选完品类再出）
       subs: item ? this.buildSubs(item.category, item.sub) : [],
@@ -137,11 +164,14 @@ Page({
       origUrl: item ? (item.originalImageUrl || (item.isWhite ? '' : item.imageUrl) || '') : '',
       origUrlFor: item ? (item.imageUrl || '') : '',
       coverChoice: item && item.normalizedUrl ? (item.isWhite ? 'white' : 'orig') : '',
+      // 自动洗白底（2026-09）：这件自己的勾选 + 后端给的流程状态（老记录没有 → 默认开、空状态）
+      autoWash: item ? (item.normalizeAuto !== false) : true,
+      normalizeStatus: item ? (item.normalizeStatus || '') : '',
       photos,
       cur: 0,
       batchSame: false,
       // 编辑已有衣物且里面填过颜色/场合时，默认展开，省得用户以为丢了
-      moreOpen: !!item && ((item.colors || []).length > 0 || (item.occasions || []).length > 0)
+      moreOpen: !!item && (Object.values(item.details || {}).some(v => v != null && v !== '') || (item.colors || []).length > 0 || (item.occasions || []).length > 0)
     })
 
     this.updateSummary()
@@ -163,7 +193,18 @@ Page({
       parts.push(colors.slice(0, 2).join('/') + (colors.length > 2 ? '等' + colors.length + '色' : ''))
     }
     if (occ.length) parts.push(occ.join('/'))
+    const d = this.data.details || {}
+    if (d.size) parts.push(d.size)
+    if (d.brand) parts.push(d.brand)
+    const extra = ['price', 'notes'].filter(k => d[k] != null && d[k] !== '').length
+    if (extra) parts.push('另有' + extra + '项')
     this.setData({ moreSummary: parts.length ? parts.join(' · ') : '未填' })
+  },
+
+  onDetailInput(e) {
+    const key = e.currentTarget.dataset.key
+    if (['size', 'brand', 'price', 'notes'].indexOf(key) < 0) return
+    this.setData({ details: Object.assign({}, this.data.details, { [key]: e.detail.value }) }, () => this.updateSummary())
   },
 
   onToggleMore() {
@@ -296,23 +337,30 @@ Page({
   },
 
   pickPhoto(sourceType) {
+    if (this.data.isAdd) usage.track('photo_start', 'item-edit', { source: sourceType[0] })
     wx.chooseMedia({
       count: 1,
       mediaType: ['image'],
       sourceType,
       sizeType: ['compressed'],
       success: (res) => {
+        if (this.data.isAdd) usage.track('photo_success', 'item-edit', { source: sourceType[0], count: 1 })
         const temp = res.tempFiles[0].tempFilePath
         // 微信的 compressed 只是轻压，再压一道质量（体积小一截，上传更快；压不动就用原图）
         photo.compress(temp).then((src) => {
           wx.getFileSystemManager().saveFile({
             tempFilePath: src,
             success: (r) => this.putPhoto(r.savedFilePath),
-            fail: () => wx.showToast({ title: T.t('itemEdit.photo_save_fail'), icon: 'none' })
+            fail: () => {
+              if (this.data.isAdd) usage.track('prepare_fail', 'item-edit', { count: 1 })
+              wx.showToast({ title: T.t('itemEdit.photo_save_fail'), icon: 'none' })
+            }
           })
         })
       },
-      fail: () => {}
+      fail: err => {
+        if (this.data.isAdd) usage.track(/cancel/i.test(err.errMsg || '') ? 'photo_cancel' : 'photo_fail', 'item-edit', { source: sourceType[0], code: /cancel/i.test(err.errMsg || '') ? '' : usage.code(err) })
+      }
     })
   },
 
@@ -398,7 +446,7 @@ Page({
         photoSrc: target.path,
         photoShow: target.path,
         origPhoto: target.path
-      }, target.form || this.blankForm()))
+      }, Object.assign(this.blankForm(), target.form || {})))
       this.syncQueueText()
       return
     }
@@ -413,17 +461,28 @@ Page({
    * 颜色/季节/场合/名称都是默认值或可跳过，不拦人（颜色为空时列表用中性灰块）
    */
   validate() {
+    if (this.data.isAdd) usage.track('save_click', 'item-edit', { source: this.data.batchSame ? 'batch' : 'single' })
     if (this.data.isAdd && !this.data.image) {
+      if (this.data.isAdd) usage.track('validation_fail', 'item-edit', { result: 'photo' })
       wx.showToast({ title: T.t('itemEdit.no_photo'), icon: 'none' })
       return null
     }
     const cat = this.data.cats.find(c => c.on)
     if (!cat) {
+      if (this.data.isAdd) usage.track('validation_fail', 'item-edit', { result: 'category' })
       wx.showToast({ title: T.t('itemEdit.no_category'), icon: 'none' })
+      return null
+    }
+    const details = {}
+    ;['size', 'brand', 'price', 'notes'].forEach(k => { details[k] = String((this.data.details || {})[k] == null ? '' : this.data.details[k]).trim() })
+    if (details.price && !/^(0|[1-9]\d{0,6})(\.\d{1,2})?$/.test(details.price)) {
+      if (this.data.isAdd) usage.track('validation_fail', 'item-edit', { result: 'price' })
+      wx.showToast({ title: '价格请填有效金额，最多两位小数', icon: 'none' })
       return null
     }
     const sub = this.data.subs.find(s => s.on)
     return {
+      details,
       id: this.data.id,
       name: (this.data.name || '').trim(),
       category: cat.key,
@@ -457,10 +516,16 @@ Page({
 
     const step = (msg) => wx.showLoading({ title: msg, mask: true })
     step(T.t('itemEdit.saving'))
-    cloud.saveItem(payload, step).then(() => {
+    cloud.saveItem(payload, step).then((saved) => {
       wx.hideLoading()
+      this.markQueuedLocal(saved)                  // 本机先标"白底图排队中"，衣橱页顶上那行立刻就出
       if (this.afterSaved(payload.image)) return   // 还有没录的 → 自动跳过去
-      wx.showToast({ title: T.t('itemEdit.saved'), icon: 'none' })
+      // 自动洗白底开着、又还没生成 → 说一句"正在生成"（用户刚在说明里看到的也是这句口径）
+      const willWash = this.data.autoWash && this.data.photoSrc && !this.data.whiteUrl
+      wx.showToast({
+        title: willWash ? T.t('itemEdit.normalize_saved_tip') : T.t('itemEdit.saved'),
+        icon: 'none'
+      })
       setTimeout(() => wx.navigateBack(), 400)
     }).catch((err) => {
       wx.hideLoading()
@@ -521,6 +586,7 @@ Page({
     const d = this.data
     return {
       name: d.name,
+      details: Object.assign({}, d.details),
       cats: d.cats,
       subs: d.subs,
       colors: d.colors,
@@ -537,6 +603,7 @@ Page({
     const presetSeason = this.seasonByMonth()
     return {
       name: '',
+      details: { size: '', brand: '', price: '', notes: '' },
       cats: this.data.cats.map(c => Object.assign({}, c, { on: false })),
       subs: [],
       colors: this.data.colors.map(c => Object.assign({}, c, { on: false })),
@@ -564,7 +631,7 @@ Page({
       image: target.path,
       photoSrc: target.path,
       origPhoto: target.path
-    }, target.form || this.blankForm()))
+    }, Object.assign(this.blankForm(), target.form || {})))
     this.syncQueueText()
   },
 
@@ -641,7 +708,8 @@ Page({
 
     const step = (msg) => wx.showLoading({ title: msg, mask: true })
     step(T.t('itemEdit.saving'))
-    cloud.saveItems(items, step).then(() => {
+    cloud.saveItems(items, step).then((saved) => {
+      (saved || items).forEach(it => this.markQueuedLocal(it))   // 整批都标"排队中"
       // 这批全标成已录，并从待录入队列里逐张摘掉
       const used = items.map(it => it.image)
       const next = this.data.photos.map(p => (used.indexOf(p.path) >= 0
@@ -665,6 +733,26 @@ Page({
         showCancel: false
       })
     })
+  },
+
+  /**
+   * 保存成功后：在本机记录上标一个「白底图排队中」（2026-09）
+   *
+   * 为什么要在本地先标：照片是**后台上传**的，后端要等照片上了 OSS 才会真正入队，
+   * 而衣橱页顶上那行提示读的是本机缓存里的状态 —— 不先标一手，用户返回衣橱时会看不到那行字
+   * （用户实测反馈："点了添加衣物，顶部没有文字"）。
+   * 标错了也没关系：每次拉取都会用云端真实状态盖回来（queued → done / ''）。
+   */
+  markQueuedLocal(saved) {
+    if (!saved || !saved.id) return
+    if (!this.data.autoWash || !this.data.photoSrc) return
+
+    const it = store.getItem(saved.id)
+    if (!it || it.normalizeStatus === 'done') return
+    if (it.normalizedUrl) return          // 已经有白底图（这件的照片没变）→ 不会重洗，别乱标
+
+    it.normalizeStatus = 'queued'
+    store.saveItem(it)
   },
 
   /** 勾选「剩下几张都用这套属性」 */
@@ -691,6 +779,10 @@ Page({
       payload.originalImageUrl = ''
       payload.normalizedUrl = ''
     }
+
+    // 自动洗白底（2026-09）：这件要不要自动洗 + 用户选的封面是哪张（'orig' = 别自动覆盖）
+    payload.normalizeAuto = !!this.data.autoWash
+    payload.coverChoice = this.data.coverChoice || ''
 
     // 洗白底时已经把这张本机照片传上去了 → 直接用它当 imageUrl，别再传一遍
     // （二次上传会生成另一个 key，"白底图对应哪张原图"的指纹就对不上，下次还得重洗花钱）
@@ -728,7 +820,8 @@ Page({
       this.setData({
         normalizeOn: !!(d && d.enabled),
         normalizeLeft: (d && typeof d.leftToday === 'number') ? d.leftToday : 0,
-        normalizeUnlimited: !!(d && d.unlimited)
+        normalizeUnlimited: !!(d && d.unlimited),
+        normalizeDaily: (d && typeof d.dailyLimit === 'number') ? d.dailyLimit : 0
       })
       this.buildWashLabels()
       if (!(d && d.enabled)) console.log('[wash] 入口不显示：后端开关关着（NORMALIZE_ENABLED）')
@@ -739,33 +832,95 @@ Page({
     })
   },
 
-  /** 入口那行的文案（标题 + 说明 + 今天还剩几次） */
+  /**
+   * 那一块的文案（2026-09 改版：勾选行 + 说明 + 状态行）
+   *
+   * 说明里那句是用户点名要的：**自动跑、每天几张、原图留着**。
+   * 每天几张这个数字只能由后端给（normalizeDaily），后端没给就不写数字（绝不编一个）。
+   */
   buildWashLabels() {
-    const left = this.data.normalizeLeft
+    const d = this.data
+    const status = d.normalizeStatus
+    const left = d.normalizeLeft
+    const limit = d.normalizeDaily
+
+    // 状态行：优先说"正在生成/排队"，其次是"已生成/失败/今天没了"；新衣物（没保存）什么都不说
+    let state = ''
+    if (status === 'queued') {
+      state = T.t('itemEdit.normalize_state_queued')
+    } else if (status === 'running') {
+      state = T.t('itemEdit.normalize_state_running')
+    } else if (d.whiteUrl) {
+      state = T.t('itemEdit.normalize_state_done')
+    } else if (status === 'failed') {
+      state = T.t('itemEdit.normalize_state_failed')
+    } else if (status === 'skipped') {
+      state = T.t('itemEdit.normalize_state_skipped')
+    } else if (d.autoWash) {
+      state = limit > 0 ? T.t('itemEdit.normalize_left', { n: left }) : ''
+    }
+
+    // 今天次数用完了：管理员不限次数，所以只在非管理员时提示
+    if (!d.normalizeUnlimited && left <= 0 && !state) {
+      state = T.t('itemEdit.normalize_none_left')
+    }
+
     this.setData({
-      normEntryTitle: T.t('itemEdit.normalize_entry'),
-      normEntrySub: this.data.whiteUrl ? T.t('itemEdit.normalize_done_sub') : T.t('itemEdit.normalize_sub'),
-      // 管理员不限次数：不显示"还剩几次"，也不用"用完了"那句
-      normLeftText: this.data.normalizeUnlimited
-        ? T.t('itemEdit.normalize_unlimited')
-        : (left > 0 ? T.t('itemEdit.normalize_left', { n: left }) : T.t('itemEdit.normalize_none_left'))
+      normAutoTitle: T.t('itemEdit.normalize_auto_title'),
+      normAutoSub: d.autoWash ? T.t('itemEdit.normalize_auto_on') : T.t('itemEdit.normalize_auto_off'),
+      // 说明：把"每天几张"塞进去（后端没给数字就用短的、不带数字的那句）
+      normNote: limit > 0
+        ? T.t('itemEdit.normalize_auto_note', { n: limit })
+        : T.t('itemEdit.normalize_auto_note_short'),
+      normStateText: state,
+      btnRegen: T.t('itemEdit.normalize_regen')
+    })
+  },
+
+  /** 勾选行：切换"这件要不要自动洗"（随保存提交，后端按件记） */
+  onToggleAuto() {
+    const next = !this.data.autoWash
+    this.setData({ autoWash: next })
+    this.buildWashLabels()
+    wx.showToast({
+      title: next ? T.t('itemEdit.normalize_auto_on') : T.t('itemEdit.normalize_auto_off'),
+      icon: 'none'
     })
   },
 
   /**
-   * 点入口：洗一张（或已经有就开对比层）
+   * 状态行的点击（2026-09）
+   *
+   * 已经有白底图 → 开对比层（换封面 / 重新生成都在里面）
+   * 还没有 → 手动洗一次（自动失败、或用户把自动关了的时候用）
+   */
+  onWashTap() {
+    if (this.data.whiteUrl) {
+      this.openCompare()
+      return
+    }
+    this.manualWash(false)
+  },
+
+  /** 对比层里的「重新生成一张」：force 重洗一次（跳过缓存，会花钱、会计次） */
+  onRegenerate() {
+    this.manualWash(true)
+  },
+
+  /**
+   * 手动洗一张（同步接口，盯着转圈 15~20 秒）
    *
    * 走「先上传 → 再洗」：接口只吃公网 https 地址，而本机照片这会儿还没上云。
-   * 洗一次 15~20 秒，所以给整屏 loading（同步接口，不走队列）。
+   * @param {boolean} force true = 「重新生成一张」（跳过缓存真重洗）
    */
-  onNormalize() {
+  manualWash(force) {
     if (!this.data.photoSrc) {
       wx.showToast({ title: T.t('itemEdit.no_photo'), icon: 'none' })
       return
     }
 
-    // 已经有白底图、而且照片没换过 → 直接开对比层，不用再请求（省钱也省时）
-    if (this.data.whiteUrl && this.data.origUrlFor && this.data.origUrlFor === this.data.photoSrc) {
+    // 已经有白底图、而且照片没换过 → 直接开对比层，不用再请求（省钱也省时）；force 时不走这条
+    if (!force && this.data.whiteUrl && this.data.origUrlFor && this.data.origUrlFor === this.data.photoSrc) {
       this.openCompare()
       return
     }
@@ -783,7 +938,7 @@ Page({
       if (!url) return
 
       wx.showLoading({ title: T.t('itemEdit.normalize_working'), mask: true })
-      api.items.normalize(this.data.isEdit ? this.data.id : '', url).then((d) => {
+      api.items.normalize(this.data.isEdit ? this.data.id : '', url, force).then((d) => {
         wx.hideLoading()
         this.setData({
           whiteUrl: (d && d.normalizedUrl) || '',
@@ -791,7 +946,9 @@ Page({
           origUrlFor: this.data.photoSrc,          // 这张白底图对应的是当前这张照片
           normalizeLeft: (d && typeof d.leftToday === 'number') ? d.leftToday : this.data.normalizeLeft,
           normalizeUnlimited: !!(d && d.unlimited) || this.data.normalizeUnlimited,
-          coverChoice: 'orig'                      // 洗完默认还是原图当封面，用户点了才换
+          // 手动洗完仍然是"原图当封面"，用户点了才换（自动流程才会自己换，见后端 runQueued）
+          coverChoice: force ? this.data.coverChoice : 'orig',
+          normalizeStatus: 'done'
         })
         this.buildWashLabels()
         this.openCompare()
@@ -843,7 +1000,8 @@ Page({
       labelOrig: T.t('itemEdit.normalize_label_orig'),
       labelWhite: T.t('itemEdit.normalize_label_white'),
       btnKeep: T.t('itemEdit.normalize_keep_orig'),
-      btnUse: T.t('itemEdit.normalize_use_white')
+      btnUse: T.t('itemEdit.normalize_use_white'),
+      btnRegen: T.t('itemEdit.normalize_regen')
     })
   },
 
@@ -904,8 +1062,9 @@ Page({
 
     const step = (msg) => wx.showLoading({ title: msg, mask: true })
     step(T.t('itemEdit.saving'))
-    cloud.saveItem(payload, step).then(() => {
+    cloud.saveItem(payload, step).then((saved) => {
       wx.hideLoading()
+      this.markQueuedLocal(saved)
       if (this.afterSaved(payload.image)) return
       this.resetForNext()
       wx.showToast({ title: T.t('itemEdit.saved_next'), icon: 'none' })
@@ -928,6 +1087,7 @@ Page({
       isEdit: false,
       isAdd: true,
       name: '',
+      details: { size: '', brand: '', price: '', notes: '' },
       image: '',
       photoSrc: '',
       origPhoto: '',

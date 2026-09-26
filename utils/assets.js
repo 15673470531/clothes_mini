@@ -25,7 +25,8 @@ const api = require('./api.js')
  * （想"在服务器上换图、不发版"时把 URL 填进后端 assets 表即可）。
  */
 const LOCAL = {
-  'empty.wardrobe': '/images/art/empty-wardrobe.png',
+  'empty.wardrobe': '/images/art/empty-wardrobe-v2.png',
+  'empty.outfit.v2': '/images/art/empty-outfit-v2.png',
   'empty.outfit':   '/images/art/empty-outfit.png',
   'empty.calendar': '/images/art/empty-calendar.png',
   'about.hero':     '/images/art/about-hero.jpg',

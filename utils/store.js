@@ -201,6 +201,7 @@ function replaceCache(data) {
       category: ci.category || '',
       sub: ci.sub || '',
       colors: ci.colors || [],
+      details: ci.details || {},
       seasons: ci.seasons || [],
       occasions: ci.occasions || [],
       imageUrl: ci.imageUrl || '',
@@ -210,6 +211,9 @@ function replaceCache(data) {
       originalImageUrl: ci.originalImageUrl || '',
       normalizedUrl: ci.normalizedUrl || '',
       isWhite: !!ci.isWhite,
+      // 自动洗白底（2026-09）：状态（queued/running/done/failed/skipped）+ 这件自己的自动勾选
+      normalizeStatus: ci.normalizeStatus || '',
+      normalizeAuto: ci.normalizeAuto !== false,
       // 云端没地址 → 沿用本机那张（后台补传的源，也是列表当前的显示源）
       image: ci.imageUrl ? '' : (old.image || ''),
       createdAt: ci.createdAt || 0

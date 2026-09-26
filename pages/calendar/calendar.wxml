@@ -1,13 +1,12 @@
-<!-- 穿搭日历（tab 2）：哪天穿了哪套
-     月历：**日期在上、那天的穿搭小图在日期下面**（一眼看出哪天穿了哪套）；没记录=空槽，搭配已删=虚线「已删」。
-     月历下面：**选中那天的大图卡**（封面 + 名称 + 件数·场合 + 换一套/清除）——想看细节看这里。
-     要改哪天就点那天 → 卡片上的「换一套」弹半屏弹层挑（一天只记一套）。 -->
 <view class="page page-with-tab">
+  <view wx:if="{{!loggedIn}}" class="guest-note">游客浏览 · 登录后可保存并同步自己的衣橱和穿搭</view>
+
 
   <!-- 月份 + 切月 -->
   <view class="cal-head">
     <view class="cal-month">{{year}}年{{month}}月</view>
     <view class="cal-navs">
+      <view wx:if="{{selDate !== today}}" class="cal-return" bindtap="onToday" role="button">回到今天</view>
       <view class="cal-nav" bindtap="onPrevMonth" hover-class="cal-nav-on">
         <view class="cal-arrow cal-arrow-l"></view>
       </view>
@@ -32,42 +31,50 @@
       bindtap="onTapDay">
       <block wx:if="{{!item.blank}}">
         <view class="cal-num"><text class="cal-num-t">{{item.day}}</text></view>
-        <image wx:if="{{item.photo}}" class="cal-pic" src="{{item.photo}}" mode="aspectFill"></image>
+        <image wx:if="{{item.photo}}" class="cal-pic" src="{{item.photo}}" mode="aspectFit"></image>
         <view wx:elif="{{item.gone}}" class="cal-pic cal-gone"><text class="cal-gone-t">已删</text></view>
-        <view wx:else class="cal-pic cal-free"></view>
+        <view wx:elif="{{item.wear}}" class="cal-record-dot"></view>
       </block>
     </view>
   </view>
 
-  <view class="cal-lead">点日期看那天的穿搭大图；点「换一套」改（未来日期也能先安排）</view>
+  <view class="cal-lead">点日期查看穿搭，也能提前安排未来</view>
 
   <!-- 选中那天的穿搭：大图卡
        标题行右边直接放「换一套/清除」（原来按钮自己占一行，整页比一屏长，底部按钮得滚动才看得见） -->
+  <view wx:if="{{syncing}}" class="cal-lead">正在同步穿搭记录…</view>
+  <view wx:if="{{syncError}}" class="sync-note"><text>暂时无法同步，当前为本机缓存</text><view class="sync-retry" bindtap="syncPage">重试</view></view>
   <view class="card cal-day">
     <view class="cal-dayhead">
       <view class="cal-daydate">{{selText}}</view>
       <view class="cal-dayacts">
-        <block wx:if="{{selName}}">
+        <block wx:if="{{hasRecord}}">
           <view class="cal-mini cal-mini-main" hover-class="cal-mini-pressed" bindtap="onOpenSheet">换一套</view>
-          <view class="cal-mini" hover-class="cal-mini-on" bindtap="onClearDay">清除</view>
+          <view class="cal-mini" hover-class="cal-mini-on" bindtap="onMoreDay" aria-label="更多记录操作" role="button">···</view>
         </block>
-        <view wx:else class="cal-mini cal-mini-main" hover-class="cal-mini-pressed" bindtap="onOpenSheet">选一套</view>
+
       </view>
     </view>
 
-    <block wx:if="{{selName}}">
+    <block wx:if="{{hasRecord}}">
       <view class="cal-dayrow">
-        <image wx:if="{{selPhoto}}" class="cal-daypic" src="{{selPhoto}}" mode="aspectFill"></image>
+        <image wx:if="{{selPhoto}}" class="cal-daypic" src="{{selPhoto}}" mode="aspectFit" bindtap="onPreview"></image>
         <view wx:elif="{{selGone}}" class="cal-daypic cal-gone"><text class="cal-gone-t">已删</text></view>
+        <view wx:else class="cal-daypic cal-no-cover">暂无封面</view>
         <view class="cal-dayinfo">
           <view class="cal-dayname {{selGone ? 't-weak' : ''}}">{{selName}}</view>
+          <view wx:if="{{selPhoto}}" class="cal-preview-hint" bindtap="onPreview">查看大图 ›</view>
           <view wx:if="{{selDesc}}" class="t-weak cal-daydesc">{{selDesc}}</view>
           <view wx:if="{{selGone}}" class="t-weak cal-daydesc">这套已经删掉了，换一套或清除</view>
         </view>
       </view>
     </block>
 
-    <view wx:else class="cal-dayrow cal-daynone">这天还没记 · 点右上「选一套」记上</view>
+    <view wx:else class="cal-daynone">
+      <text class="cal-empty-title">{{emptyTitle}}</text>
+      <text class="cal-empty-desc">{{!loggedIn ? '浏览日期，登录后记录当天穿搭或提前安排' : pickList.length ? '从已保存的搭配里选一套' : '先创建一套搭配，再记到日历里'}}</text>
+      <view wx:if="{{!syncing && !syncError}}" class="empty-action" bindtap="onOpenSheet">{{!loggedIn ? '记录这天的穿搭' : pickList.length ? '选一套搭配' : '去创建搭配'}}</view>
+    </view>
   </view>
 
   <view class="gap"></view>
@@ -91,7 +98,7 @@
             data-id="{{item.id}}"
             bindtap="onPick">
             <view class="sh-picwrap">
-              <image wx:if="{{item.photo}}" class="wall-pic" src="{{item.photo}}" mode="aspectFill"></image>
+              <image wx:if="{{item.photo}}" class="wall-pic" src="{{item.photo}}" mode="aspectFit"></image>
               <view wx:else class="wall-pic wall-ph {{item.light ? 'thumb-light' : ''}}" style="background:{{item.color}}">
                 <text class="thumb-emoji">{{item.emoji}}</text>
               </view>
@@ -103,15 +110,17 @@
         <view wx:else class="empty empty-in-sheet">
           <image wx:if="{{emptyPic}}" class="empty-img empty-pic-cal"
             src="{{emptyPic}}" mode="widthFix" lazy-load binderror="onEmptyPicErr"></image>
-          <text class="empty-text">还没有搭配，先去「穿搭」页建一套</text>
+          <text class="empty-text">还没有搭配，先创建一套吧</text>
+          <view class="empty-action" bindtap="onGoOutfits">去创建搭配</view>
         </view>
         <view class="sh-pad"></view>
       </scroll-view>
 
-      <view class="sh-foot">
+      <view wx:if="{{hasRecord}}" class="sh-foot">
         <view class="cal-btn sh-clear" hover-class="cal-btn-on" bindtap="onClearDay">清除这天的记录</view>
       </view>
     </view>
   </view>
+
 
 </view>

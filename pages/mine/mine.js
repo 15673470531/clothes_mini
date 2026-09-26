@@ -1,14 +1,20 @@
+const personalTryon = require('../../utils/personal-tryon.js')
 /**
  * 我的（tab 2）
  *
  * 登录（参考 money 项目，2026-09 接后端后新增）：
- *  - 未登录：卡片 + 「微信授权登录」按钮（`open-type="chooseAvatar"`）——
- *    微信现在必须由用户点这个按钮才能拿到头像，不能弹窗问
- *  - 已登录：头像（点一下也能换，同一个 chooseAvatar）+ 昵称 + ID
+ *  - 未登录：卡片 + 「微信登录」按钮（普通 button，bindtap）→ 直接登录，不弹任何选择器
+ *  - 已登录：头像（点一下就能换）+ 昵称 + ID
  *  - 昵称：**不给用户自动填微信昵称**，而是点「修改」后用 `<input type="nickname">`
  *    让用户自己选/填（符合微信规范，避免审核卡）
- *  - 头像：chooseAvatar 给的是**临时文件**，必须传到后端换正式地址（`api.user.uploadAvatar`），
- *    否则重开小程序头像就没了
+ *  - 头像：`wx.chooseMedia` 从相册/拍照选（**只有这两项，没有"使用微信头像"**）
+ *    ⚠️ 微信从 2022-10-25 起 getUserProfile 只返回匿名数据（昵称「微信用户」+ 灰头像），
+ *      "登录完自动就有微信头像"这条路是平台关掉的 —— 想一键用微信头像，只能让用户点
+ *      `<button open-type="chooseAvatar">`（原生选择器里有那一项）。
+ *    ⚠️ 2026-09 试过"点登录时就弹头像选择器"（登录按钮挂 open-type="chooseAvatar"），**已撤回**：
+ *      真机上表现不稳（"点了直接进去、不弹选择器"）；那版还有"退出登录后再点登录没反应"的 bug
+ *      （登录 promise 缓存没清）。要再做，先把这两条解决。
+ *  - 头像拿到的是**临时文件**，必须传到后端换正式地址（`api.user.uploadAvatar`），否则重开小程序头像就没了
  *
  * 数据仍然只存本机（一期后端只做登录 + 用户资料 + 意见反馈）：登录成功不代表衣物上云，
  * 所以清空本机数据、换手机丢失这些说明保留。
@@ -33,8 +39,12 @@ const T = require('../../utils/texts.js')
 
 Page({
   data: {
+    personalTryonVisible: false,
     version: '0.1.0',
     loggedIn: false,
+    loggingIn: false,
+    avatarUploading: false,
+    isDevelop: false,
     userInfo: { userId: 0, name: '', nickName: '', avatarUrl: '', isAdmin: false },
     displayName: '',
     displayId: '',
@@ -49,14 +59,24 @@ Page({
     hangerCardText: ''        // 「衣架 97 / 162」= 可用 / 总数：在 JS 里拼好，WXML 不拼接
   },
 
+  onPersonalTryon() { personalTryon.open('') },
+
   onShow() {
+    personalTryon.visibility(this)
+    // 仅开发版展示全部现有菜单；读取失败按正式环境处理。
+    let isDevelop = false
+    try { isDevelop = wx.getAccountInfoSync().miniProgram.envVersion === 'develop' } catch (e) {}
+    this.setData({ isDevelop })
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setSelected(3)
     }
     this.syncState()
     // 已登录就静默拉一次最新资料（后台改过昵称/头像能同步过来；token 失效会被 api 清掉 → 变回未登录）
     if (this.data.loggedIn) {
+      const avatarRevision = this._avatarRevision || 0
+      const profileToken = wx.getStorageSync('token')
       api.user.info().then((d) => {
+        if (profileToken !== wx.getStorageSync('token') || this.data.avatarUploading || avatarRevision !== (this._avatarRevision || 0)) return
         const ui = {
           userId: d.userId,
           name: d.name || '',
@@ -138,73 +158,75 @@ Page({
     })
   },
 
-  /**
-   * 点了头像按钮（未登录 = 登录；已登录 = 换头像）
-   * 注意：这里拿到的是临时文件路径，先本地显示撑住界面，再传后端换正式地址
-   */
-  onChooseAvatar(e) {
-    const localPath = (e.detail && e.detail.avatarUrl) || ''
-    if (!localPath) {
-      wx.showToast({ title: T.t('mine.avatar_fail'), icon: 'none' })
-      return
-    }
-    // 先本地显示（不等网络）
-    this.setData({ 'userInfo.avatarUrl': localPath })
-
-    if (api.isLoggedIn()) {
-      this.uploadAvatar(localPath)
-      return
-    }
-
-    wx.showLoading({ title: T.t('mine.logging_in'), mask: true })
-    api.login().then((d) => {
-      wx.hideLoading()
-      wx.showToast({ title: T.t('mine.login_ok'), icon: 'success' })
-      const ui = {
-        userId: d.userId,
-        name: d.name || '',
-        nickName: d.nickName || '',
-        avatarUrl: localPath,
-        isAdmin: !!d.isAdmin
-      }
+  /** 登录（bindtap 触发）：只做登录，头像在「我的」页点头像单独换 */
+  onLogin() {
+    if (this.data.loggingIn) return
+    this.setData({ loggingIn: true })
+    return api.login().then(d => {
       this.setData({ loggedIn: true })
-      this.applyUser(ui)
-      this.loadHanger()                 // 登录成功立刻拉衣架数字（不然要切一下 tab 才出来）
-      this.uploadAvatar(localPath)      // 换正式地址（失败不拦，本地先用着）
-    }).catch((err) => {
-      wx.hideLoading()
-      wx.showToast({ title: (err && err.msg) || T.t('mine.login_fail'), icon: 'none' })
+      this.applyUser({ userId: d.userId, name: d.name || '', nickName: d.nickName || '', avatarUrl: d.avatarUrl || '', isAdmin: !!d.isAdmin })
+      this.loadHanger()
+      personalTryon.visibility(this)
+      cloud.ready()
+      wx.showToast({ title: T.t('mine.login_ok'), icon: 'success' })
+    }).catch(err => {
+      const reason = err && (err.msg || err.message || err.errMsg)
+      wx.showModal({ title: '登录未成功', content: reason || '网络异常，请稍后重试', showCancel: false })
+    }).finally(() => this.setData({ loggingIn: false }))
+  },
+
+  /** 点头像换头像：从相册或拍照选一张 */
+  onPickAvatar() {
+    if (this.data.avatarUploading) return
+    if (!api.isLoggedIn()) { this.syncState(); return }
+    const token = wx.getStorageSync('token')
+    wx.chooseMedia({
+      count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], sizeType: ['compressed'],
+      success: r => {
+        if (token !== wx.getStorageSync('token')) return
+        const path = r.tempFiles && r.tempFiles[0] && r.tempFiles[0].tempFilePath
+        if (path) this.uploadAvatar(path)
+      },
+      fail: err => {
+        if (/cancel/i.test(err.errMsg || '')) return
+        wx.showModal({ title: '无法选择头像', content: err.errMsg || '请检查相册或相机权限后重试', showCancel: false })
+      }
     })
   },
 
-  /**
-   * 头像上传：成功了换成后端地址（重开小程序也在）
-   *
-   * **内容没变就不重复传**（2026-09 用户要求）：chooseAvatar 每次给的临时路径都不一样，
-   * 用户点开头像又选了同一张会白传一次；这里拿文件内容指纹（utils/file-key.js）比一下。
-   * 只有上传成功才记指纹 → 传失败时下次照样会重传，不会把头像"卡"在本地。
-   */
-  uploadAvatar(localPath) {
-    if (!localPath) return
-    // 已经是后端的正式地址了就不用再传（换头像时拿到的是临时文件，正常都会走上传）
-    if (String(localPath).indexOf('/storage/avatars/') >= 0) return
+  /** 保留原生头像回调兼容旧入口（现在按钮走 onPickAvatar，不再绑它）。 */
+  onChooseAvatar(e) {
+    const path = e.detail && e.detail.avatarUrl
+    if (path && api.isLoggedIn()) return this.uploadAvatar(path)
+  },
 
+  uploadAvatar(localPath) {
+    if (!localPath || this.data.avatarUploading || !api.isLoggedIn()) return
+    const token = wx.getStorageSync('token')
+    const previous = (wx.getStorageSync('userInfo') || {}).avatarUrl || ''
     const key = fileKey.ofFile(localPath)
-    if (key && key === (wx.getStorageSync('avatarKey') || '')) {
-      // 跟上次传上去的是同一张：省掉这次上传，界面回到后端那张（本机 userInfo 存的就是后端地址）
-      const ui = wx.getStorageSync('userInfo') || {}
-      if (ui.avatarUrl) this.setData({ 'userInfo.avatarUrl': ui.avatarUrl })
+    if (key && previous && key === wx.getStorageSync('avatarKey')) {
+      this.setData({ 'userInfo.avatarUrl': previous })
+      wx.showToast({ title: '已是当前头像', icon: 'none' })
       return
     }
-
-    api.user.uploadAvatar(localPath).then((url) => {
+    this._avatarRevision = (this._avatarRevision || 0) + 1
+    this.setData({ avatarUploading: true, 'userInfo.avatarUrl': localPath })
+    return api.user.uploadAvatar(localPath).then(url => {
+      if (token !== wx.getStorageSync('token')) return
       const ui = wx.getStorageSync('userInfo') || {}
       ui.avatarUrl = url
       wx.setStorageSync('userInfo', ui)
-      wx.setStorageSync('avatarKey', key)      // 传成功才记指纹
+      wx.setStorageSync('avatarKey', key)
       this.setData({ 'userInfo.avatarUrl': url })
-    }).catch(() => {
-      // 上传失败就用本地临时路径顶着，不打断用户
+      wx.showToast({ title: '头像已更新', icon: 'success' })
+    }).catch(err => {
+      if (token !== wx.getStorageSync('token')) return
+      this.setData({ 'userInfo.avatarUrl': previous })
+      wx.showModal({ title: '头像更新失败', content: err && (err.msg || err.message || err.errMsg) || '请稍后重试', showCancel: false })
+    }).finally(() => {
+      this._avatarRevision++
+      this.setData({ avatarUploading: false })
     })
   },
 
@@ -302,7 +324,7 @@ Page({
   },
 
   /**
-   * 数据统计（2026-09，只有管理员能看到这条菜单）
+   * 数据统计（开发版展示入口；体验版、正式版仅管理员可见）
    * 前端藏入口只是体验；真拦人在后端（非管理员调 /api/admin/* 会被 403）
    */
   onStats() {

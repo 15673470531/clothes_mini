@@ -383,3 +383,6 @@
 
 /* 额度那行的样式已随方案 1 一起收掉（信息挪到菜单里的「衣架」行 + 衣架说明页） */
 
+
+.ico-about { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNUQ0QzdDIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjQiLz48cGF0aCBkPSJNMTIgMTF2Nk0xMiA3LjR2LjIiLz48L3N2Zz4="); }
+

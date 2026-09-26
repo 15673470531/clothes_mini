@@ -1,6 +1,6 @@
 <!-- 一格：有衣物画衣物，空格是虚线框（2026-09 起不写品类提示，位置由用户拖拽决定） -->
 <template name="pos-tile">
-  <image wx:if="{{t.image}}" class="pos-img" src="{{t.image}}" mode="aspectFill"></image>
+  <image wx:if="{{t.image}}" class="pos-img" src="{{t.image}}" mode="aspectFit"></image>
   <view wx:else class="pos-block {{t.light ? 'pos-block-light' : ''}}" style="background:{{t.color}}">
     <text class="pos-emoji">{{t.emoji}}</text>
   </view>
@@ -14,7 +14,12 @@
     <!-- 9 个位置：左列两栏（上身 / 下身 / 脚）+ 右列配饰栏
          长按衣物可拖到别的格子（拖到有衣物的是交换）；空格点一下去挑一件放这里
          2026-09：九宫格挪到最上面（先看搭好的样子），名称/场合放到它下面 -->
-    <view class="card pad pv-canvas">
+    <view class="card pad pv-canvas {{dragging ? 'pv-dragging' : ''}}">
+      <view class="pv-toolbar">
+        <text class="pv-toolbar-title">调整搭配</text>
+        <view class="pv-preview" hover-class="pv-preview-pressed" bindtap="onPreview" role="button"
+          aria-label="预览搭配">{{previewBusy ? '生成中…' : '预览'}}</view>
+      </view>
       <view class="pos-body">
         <view class="pos-main">
           <view wx:for="{{main}}" wx:for-item="row" wx:key="k" class="pos-row">
@@ -22,13 +27,13 @@
               wx:for="{{row.cells}}"
               wx:for-item="c"
               wx:key="k"
-              class="pos-slot {{c.item ? 'pos-filled' : 'pos-blank'}} {{c.idx === dragHot ? 'pos-hot' : ''}} {{dragging && c.idx === dragFrom ? 'pos-source' : ''}}"
+              class="pos-slot {{c.item ? 'pos-filled' : 'pos-blank'}} {{c.idx === dragHot && c.idx !== dragFrom ? 'pos-hot' : ''}} {{c.idx === dropIndex ? 'pos-dropped' : ''}} {{dragging && c.idx === dragFrom ? 'pos-source' : ''}}"
               data-idx="{{c.idx}}"
               bindtap="onCellTap"
               bindtouchstart="onCellStart"
               catchtouchmove="onCellMove"
               bindtouchend="onCellEnd"
-              bindtouchcancel="onCellEnd">
+              bindtouchcancel="onCellCancel">
               <block wx:if="{{c.item}}">
                 <template is="pos-tile" data="{{t: c.item}}" />
                 <!-- 右上角 ×：把这件从这套搭配里移出（衣物还在衣橱） -->
@@ -44,13 +49,13 @@
             wx:for="{{side}}"
             wx:for-item="c"
             wx:key="k"
-            class="pos-slot {{c.item ? 'pos-filled' : 'pos-blank'}} {{c.idx === dragHot ? 'pos-hot' : ''}} {{dragging && c.idx === dragFrom ? 'pos-source' : ''}}"
+            class="pos-slot {{c.item ? 'pos-filled' : 'pos-blank'}} {{c.idx === dragHot && c.idx !== dragFrom ? 'pos-hot' : ''}} {{c.idx === dropIndex ? 'pos-dropped' : ''}} {{dragging && c.idx === dragFrom ? 'pos-source' : ''}}"
             data-idx="{{c.idx}}"
             bindtap="onCellTap"
             bindtouchstart="onCellStart"
             catchtouchmove="onCellMove"
             bindtouchend="onCellEnd"
-            bindtouchcancel="onCellEnd">
+            bindtouchcancel="onCellCancel">
             <block wx:if="{{c.item}}">
               <template is="pos-tile" data="{{t: c.item}}" />
               <!-- 右上角 ×：把这件从这套搭配里移出（衣物还在衣橱） -->
@@ -61,11 +66,13 @@
         </view>
       </view>
 
-      <view class="pv-hint">长按衣物可拖到别的格子 · 点右上角 × 移出</view>
+      <view class="pv-hint">{{dragging ? dragHint : '长按拖动 · 移到已有衣物的位置可交换'}}</view>
       <!-- 还没真正保存的两种情况（新建的草稿 / 编辑里刚挑的衣物）：提醒「完成」才算保存 -->
-      <view wx:if="{{unsaved}}" class="pv-draft">还没保存 · 点底部「完成」保存这套搭配，直接返回就不保存了</view>
+      <view wx:if="{{unsaved}}" class="pv-draft">还没保存 · 点底部「保存搭配」保存这套搭配，直接返回就不保存了</view>
       <view wx:if="{{missing > 0}}" class="pv-warn">有 {{missing}} 件已从衣橱删除</view>
     </view>
+
+    <view wx:if="{{personalTryonVisible && !unsaved}}" class="card pad" bindtap="onPersonalTryon">试穿搭配中的上衣 · 内测 ›</view>
 
     <!-- 场合 + 名称：照「记录衣物」页的写法（场合 = 等宽格；名称行 = 左标签 + 右输入）
          都能在这页改；改动即时存盘 -->
@@ -104,13 +111,11 @@
   <!-- 出图用的画布：挪到屏幕外（原生组件，别遮挡页面） -->
   <canvas type="2d" id="shot-canvas" class="shot-canvas"></canvas>
 
-  <!-- 底部三个按钮：保存图片（出拼图）/ 试穿（AI 真人上身）/ 完成（存盘）
-       试穿按后端开关显示：没开放、没登录、次数用完都不显示，免得点进去是死路 -->
+  <!-- 底部仅保留保存本地与保存搭配；试穿入口暂不开放。 -->
   <view class="bar">
     <view class="bar-btns">
-      <view class="btn btn-ghost" bindtap="onSaveAlbum">保存图片</view>
-      <view wx:if="{{showTryon}}" class="btn btn-ghost" hover-class="pressed" bindtap="onTryOn">试穿</view>
-      <view class="btn btn-primary" hover-class="pressed" bindtap="onDone">完成</view>
+      <view class="btn btn-ghost" bindtap="onSaveAlbum">保存本地</view>
+      <view class="btn btn-primary" hover-class="pressed" bindtap="onDone">保存搭配</view>
     </view>
   </view>
 </view>
